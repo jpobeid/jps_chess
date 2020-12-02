@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "876095875482",
+    "firebase_url": "https://jp-s-chess.firebaseio.com",
+    "project_id": "jp-s-chess",
+    "storage_bucket": "jp-s-chess.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:876095875482:android:d09bbfa5d9161af3793223",
+        "android_client_info": {
+          "package_name": "com.jpobeid.jps_chess"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "876095875482-spe9r8sjigm6jkte79j5bt1kt1jo7g79.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.jpobeid.jps_chess",
+            "certificate_hash": "22248a5f361a266b1ff6796d7ef62d6d62229f31"
+          }
+        },
+        {
+          "client_id": "876095875482-lgr07gc6uhgjqt8jvtg57kkgdvhc67dk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAtjF9grvfNTl137ymPtzdhUFkaUEQ630c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "876095875482-lgr07gc6uhgjqt8jvtg57kkgdvhc67dk.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
