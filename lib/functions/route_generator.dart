@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:jps_chess/pages/about_page.dart';
 import 'package:jps_chess/pages/game_layout_offline.dart';
 import 'package:jps_chess/pages/game_layout_online.dart';
 import 'package:jps_chess/pages/lobby_page.dart';
 import 'package:jps_chess/pages/login_page.dart';
+import 'package:jps_chess/pages/settings_page.dart';
 import 'package:jps_chess/pages/special_select_offline.dart';
 import 'package:jps_chess/pages/special_select_online.dart';
 import 'package:jps_chess/pages/title_page.dart';
@@ -13,6 +15,12 @@ class RouteGenerator {
     switch (settings.name) {
       case (TitlePage.routeName):
         return MaterialPageRoute(builder: (context) => TitlePage());
+        break;
+      case (SettingsPage.routeName):
+        return MaterialPageRoute(builder: (context) => SettingsPage());
+        break;
+      case (AboutPage.routeName):
+        return MaterialPageRoute(builder: (context) => AboutPage());
         break;
       case (LoginPage.routeName):
         return MaterialPageRoute(builder: (context) => LoginPage());

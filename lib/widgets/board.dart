@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart' as fnd;
 class Board extends StatelessWidget {
   final double dimBoard;
   final int nDiv;
+  final List<Color> listBoardColor;
   final List<int> listTap;
   final List<List<int>> listTupleDMotion;
   final bool isPieceAbilityActive;
@@ -21,6 +22,7 @@ class Board extends StatelessWidget {
     Key key,
     this.dimBoard,
     this.nDiv,
+    this.listBoardColor,
     this.listTap,
     this.listTupleDMotion,
     this.isPieceAbilityActive,
@@ -42,6 +44,7 @@ class Board extends StatelessWidget {
       child: CustomPaint(
         painter: BoardPainter(
           nDiv: nDiv,
+          listBoardColor: listBoardColor,
           listTap: listTap,
           listTupleDMotion: listTupleDMotion,
           isPieceAbilityActive: isPieceAbilityActive,
@@ -61,6 +64,7 @@ class Board extends StatelessWidget {
 
 class BoardPainter extends CustomPainter {
   final int nDiv;
+  final List<Color> listBoardColor;
   final List<int> listTap;
   final List<List<int>> listTupleDMotion;
   final bool isPieceAbilityActive;
@@ -75,6 +79,7 @@ class BoardPainter extends CustomPainter {
 
   BoardPainter({
     this.nDiv,
+    this.listBoardColor,
     this.listTap,
     this.listTupleDMotion,
     this.isPieceAbilityActive,
@@ -97,22 +102,22 @@ class BoardPainter extends CustomPainter {
     paintBox1.color = Colors.grey[800];
 
     Paint paintBoxSelected = Paint();
-    paintBoxSelected.color = Color.fromARGB(255, 255, 220, 0);
+    paintBoxSelected.color = listBoardColor[2];
 
     Paint paintBoxMotionPotential = Paint();
-    paintBoxMotionPotential.color = Color.fromARGB(100, 220, 220, 0);
+    paintBoxMotionPotential.color = Color.fromARGB(100, listBoardColor[2].red, listBoardColor[2].green, listBoardColor[2].blue);
 
     Paint paintBoxAbilityPotential = Paint();
-    paintBoxAbilityPotential.color = Color.fromARGB(100, 220, 20, 105);
+    paintBoxAbilityPotential.color = listBoardColor[3];
 
     Paint paintBoxFixed = Paint();
-    paintBoxFixed.color = Color.fromARGB(150, 20, 150, 75);
+    paintBoxFixed.color = listBoardColor[4];
 
     Paint paintBoxForced = Paint();
-    paintBoxForced.color = Color.fromARGB(100, 0, 0, 250);
+    paintBoxForced.color = listBoardColor[5];
 
     Paint paintBoxTargeted = Paint();
-    paintBoxTargeted.color = Color.fromARGB(150, 250, 30, 0);
+    paintBoxTargeted.color = listBoardColor[6];
 
     Paint paintBoxSelf = Paint();
     paintBoxSelf.color =

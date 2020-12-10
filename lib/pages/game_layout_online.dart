@@ -55,6 +55,7 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
   bool _isSpecialAbilityAvailableProper = true;
   int _nSpecialAbilitySubtypeProper;
   int _nTimesSpecialAbilityUsed = 0;
+  bool _isToPop = false;
 
   int _nPlayers = 2;
   int _nTurn;
@@ -232,7 +233,8 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
           _mapStatusRival['mySpecialLabel']
               .addAll(_mapStatusRival['mySpecial']);
           _mapStatusRival['mySpecial'].clear();
-          uploadDeclaration(_indexPlayerProper, 'You just attacked the mesmer...');
+          uploadDeclaration(
+              _indexPlayerProper, 'You just attacked the mesmer...');
         }
       });
     }
@@ -433,8 +435,8 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
         break;
       case 'pawn':
         if (index ==
-            pieces.mapAbilityName[_strPieceSelected]
-                .indexOf('I gotchu homie') &&
+                pieces.mapAbilityName[_strPieceSelected]
+                    .indexOf('I gotchu homie') &&
             !(_listTap[1] == rMax)) {
           showInvalidSnackBar(context, strPawnEdgeError);
           return true;
@@ -575,9 +577,11 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
         break;
       case 'pawn':
         if (_mapPieceAbilityActive.values.first ==
-            pieces.mapAbilityName[_strPieceSelected].indexOf('I gotchu homie')) {
+            pieces.mapAbilityName[_strPieceSelected]
+                .indexOf('I gotchu homie')) {
           setState(() {
-            mapRemoveAdd(_mapSelf, _mapGraveSelf, [true, true], _listTap, 'pawn', listNewTap, false);
+            mapRemoveAdd(_mapSelf, _mapGraveSelf, [true, true], _listTap,
+                'pawn', listNewTap, false);
             endTurn();
           });
         }
@@ -1130,14 +1134,15 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
             completeSpecialAbility(false, true, false);
           }
         } else if (!isPreGame) {
-          bool isMotionPotentialZone = (_listTap.isNotEmpty && _listTupleDMotion.isNotEmpty &&
+          bool isMotionPotentialZone = (_listTap.isNotEmpty &&
+              _listTupleDMotion.isNotEmpty &&
               _listTupleDMotion.any((element) => fnd.listEquals(
                   [element[0] + _listTap[0], element[1] + _listTap[1]],
                   listNewTap)));
-          bool isNewTapControlledPieceAttack =
-              isMotionPotentialZone && checkOccupied(_mapRival, listNewTap) &&
-                  _mapStatusSelf['mySpecial']
-                      .any((element) => fnd.listEquals(element, listNewTap));
+          bool isNewTapControlledPieceAttack = isMotionPotentialZone &&
+              checkOccupied(_mapRival, listNewTap) &&
+              _mapStatusSelf['mySpecial']
+                  .any((element) => fnd.listEquals(element, listNewTap));
           if (_mapStatusSelf['mySpecial'].length == 2 &&
               isNewTapControlledPieceAttack) {
             setState(() {
@@ -1300,8 +1305,8 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
             completeSpecialAbility(false, true, false);
           }
         } else if (!isPreGame && isPotentialZone) {
-          mapRemoveAdd(
-              _mapRival, _mapGraveRival, [true, false], listNewTap, '', [], false);
+          mapRemoveAdd(_mapRival, _mapGraveRival, [true, false], listNewTap, '',
+              [], false);
           _nTimesSpecialAbilityUsed++;
           bool toMakeNotAvailable = (_nTimesSpecialAbilityUsed >=
               _listTimesSpecialAbilityMaxProper[_indexPlayerProper]);
@@ -1579,8 +1584,8 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
       case 'targeted':
         if (checkOccupied(_mapSelf, listCoordinates) &&
             getPieceName(_mapSelf, listCoordinates) != 'king') {
-          mapRemoveAdd(
-              _mapSelf, _mapGraveSelf, [true, false], listCoordinates, '', [], false);
+          mapRemoveAdd(_mapSelf, _mapGraveSelf, [true, false], listCoordinates,
+              '', [], false);
         } else if (checkOccupied(_mapRival, listCoordinates) &&
             getPieceName(_mapRival, listCoordinates) != 'king') {
           mapRemoveAdd(_mapRival, _mapGraveRival, [true, false],
@@ -2095,77 +2100,92 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
               ? players.colorTeam0
               : players.colorTeam1),
         ),
-        body: Column(
-          children: [
-            Divider(
-              height: GameLayoutOnline.sizeDivider,
-              thickness: GameLayoutOnline.sizeDivider,
-              color: Colors.amberAccent,
-            ),
-            GestureDetector(
-              child: makeBoard(dimBoard, dimBox, _mapSelf, _mapRival),
-              onTapDown: (details) => functionTap(dimBoard, dimBox, details),
-            ),
-            Divider(
-              height: GameLayoutOnline.sizeDivider,
-              thickness: GameLayoutOnline.sizeDivider,
-              color: Colors.amberAccent,
-            ),
-            !isPreGame
-                ? FittedBox(
-                    child: ToggleButtons(
-                      children: [
-                        Container(
-                          width: MediaQuery.of(context).size.width / 2,
-                          child: Text(
-                            'Special Ability',
-                            style: GameLayoutOnline.styleSub,
-                            textAlign: TextAlign.center,
+        body: WillPopScope(
+          child: Column(
+            children: [
+              Divider(
+                height: GameLayoutOnline.sizeDivider,
+                thickness: GameLayoutOnline.sizeDivider,
+                color: Colors.amberAccent,
+              ),
+              GestureDetector(
+                child: makeBoard(dimBoard, dimBox, _mapSelf, _mapRival),
+                onTapDown: (details) => functionTap(dimBoard, dimBox, details),
+              ),
+              Divider(
+                height: GameLayoutOnline.sizeDivider,
+                thickness: GameLayoutOnline.sizeDivider,
+                color: Colors.amberAccent,
+              ),
+              !isPreGame
+                  ? FittedBox(
+                      child: ToggleButtons(
+                        children: [
+                          Container(
+                            width: MediaQuery.of(context).size.width / 2,
+                            child: Text(
+                              'Special Ability',
+                              style: GameLayoutOnline.styleSub,
+                              textAlign: TextAlign.center,
+                            ),
                           ),
-                        ),
-                        Container(
-                          width: MediaQuery.of(context).size.width / 2,
-                          child: Text(
-                            'Piece Ability',
-                            style: GameLayoutOnline.styleSub,
-                            textAlign: TextAlign.center,
+                          Container(
+                            width: MediaQuery.of(context).size.width / 2,
+                            child: Text(
+                              'Piece Ability',
+                              style: GameLayoutOnline.styleSub,
+                              textAlign: TextAlign.center,
+                            ),
                           ),
-                        ),
-                      ],
-                      borderRadius: BorderRadius.circular(
-                          GameLayoutOnline.sizeBorderRadius),
-                      isSelected: listToggleAbilityProper,
-                      color: Colors.white,
-                      borderColor: Theme.of(context).scaffoldBackgroundColor,
-                      fillColor: Colors.white,
-                      selectedColor: Theme.of(context).scaffoldBackgroundColor,
-                      onPressed: (index) {
-                        bool isPieceAbilityActive =
-                            _mapPieceAbilityActive.isNotEmpty;
-                        bool isSingleUseSpecialActive =
-                            _listTimesSpecialAbilityMaxProper[
-                                        _indexPlayerProper] !=
-                                    0 &&
-                                _isSpecialAbilityActiveProper;
-                        if (!isPieceAbilityActive &&
-                            !isSingleUseSpecialActive) {
-                          setState(() {
-                            listToggleAbilityProper =
-                                listToggleAbilityProper.map((e) => !e).toList();
-                          });
-                        }
-                      },
-                    ),
-                  )
-                : Container(),
-            !isPreGame
-                ? Expanded(
-                    child: listToggleAbilityProper[0]
-                        ? makeSpecialAbilitySection(context)
-                        : makePieceAbilitySection(context, _strPieceSelected),
-                  )
-                : Container(),
-          ],
+                        ],
+                        borderRadius: BorderRadius.circular(
+                            GameLayoutOnline.sizeBorderRadius),
+                        isSelected: listToggleAbilityProper,
+                        color: Colors.white,
+                        borderColor: Theme.of(context).scaffoldBackgroundColor,
+                        fillColor: Colors.white,
+                        selectedColor: Theme.of(context).scaffoldBackgroundColor,
+                        onPressed: (index) {
+                          bool isPieceAbilityActive =
+                              _mapPieceAbilityActive.isNotEmpty;
+                          bool isSingleUseSpecialActive =
+                              _listTimesSpecialAbilityMaxProper[
+                                          _indexPlayerProper] !=
+                                      0 &&
+                                  _isSpecialAbilityActiveProper;
+                          if (!isPieceAbilityActive &&
+                              !isSingleUseSpecialActive) {
+                            setState(() {
+                              listToggleAbilityProper =
+                                  listToggleAbilityProper.map((e) => !e).toList();
+                            });
+                          }
+                        },
+                      ),
+                    )
+                  : Container(),
+              !isPreGame
+                  ? Expanded(
+                      child: listToggleAbilityProper[0]
+                          ? makeSpecialAbilitySection(context)
+                          : makePieceAbilitySection(context, _strPieceSelected),
+                    )
+                  : Container(),
+            ],
+          ),
+          onWillPop: () async {
+            if (!_isToPop) {
+              showDialog(context: context, builder: (context){
+                return AlertDialog(
+                  content: Text('Tap back again to exit'),
+                );
+              });
+              _isToPop = !_isToPop;
+              return false;
+            } else {
+              return _isToPop;
+            }
+          },
         ),
       ),
     );

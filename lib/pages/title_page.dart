@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:rive/rive.dart';
 import 'package:flutter/services.dart';
@@ -5,6 +6,7 @@ import 'package:flutter/services.dart';
 class TitlePage extends StatefulWidget {
   static const routeName = '/title-page';
 
+  static const Icon iconSettings = Icon(Icons.settings, color: Color.fromARGB(255, 220, 220, 220), size: 36);
   static const TextStyle styleTitle =
       TextStyle(color: Colors.white, fontWeight: FontWeight.bold);
   static const double fractionWidthTitle = 0.8;
@@ -48,13 +50,22 @@ class _TitlePageState extends State<TitlePage> {
     if (MediaQuery.of(context).orientation == Orientation.portrait) {
       return SafeArea(
         child: Scaffold(
+          appBar: AppBar(
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            actions: [
+              FlatButton.icon(
+                icon: TitlePage.iconSettings,
+                label: Text(''),
+                onPressed: () {
+                  Navigator.of(context).pushNamed('/settings-page');
+                },
+              )
+            ],
+          ),
           body: Column(
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Spacer(
-                flex: TitlePage.listFlexColumn[0],
-              ),
               Flexible(
                 flex: TitlePage.listFlexColumn[1],
                 child: FractionallySizedBox(
@@ -88,9 +99,9 @@ class _TitlePageState extends State<TitlePage> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    makeModeButton(context, TitlePage.fractionHeightMode,
+                    _makeModeButton(context, TitlePage.fractionHeightMode,
                         TitlePage.listModeName, 0),
-                    makeModeButton(context, TitlePage.fractionHeightMode,
+                    _makeModeButton(context, TitlePage.fractionHeightMode,
                         TitlePage.listModeName, 1),
                   ],
                 ),
@@ -105,7 +116,7 @@ class _TitlePageState extends State<TitlePage> {
   }
 }
 
-Container makeModeButton(BuildContext context, double fractionHeightMode,
+Container _makeModeButton(BuildContext context, double fractionHeightMode,
     List<String> listModeName, int index) {
   const fractionWidthMode = 0.8;
   const TextStyle styleMode = TextStyle(

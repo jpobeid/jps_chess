@@ -9,6 +9,7 @@ import 'package:jps_chess/functions/motion_functions.dart';
 import 'package:jps_chess/functions/piece_ability_functions.dart';
 import 'package:jps_chess/functions/special_ability_functions.dart';
 import 'package:flutter/services.dart';
+import 'package:jps_chess/functions/settings_functions.dart';
 
 int nDiv = 8;
 int rMax = nDiv - 1;
@@ -40,6 +41,7 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
   int _nTurn;
   int _indexActivePlayer;
   bool _toTranspose = true;
+  bool _isToPop = false;
 
   Map<String, List<List<int>>> _mapSelf = {
     'king': [
@@ -133,6 +135,8 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
     'mySpecial': [],
     'mySpecialLabel': [],
   };
+  bool _isRivalKingAlive = true;
+  List<Color> _listBoardColors;
   Map<int, String> _mapFutureBuilder = {};
   Map<int, List<dynamic>> _mapFutureBuilderArgs = {};
   List<bool> _listToggleAbility = [true, false];
@@ -168,6 +172,7 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
     listStack.add(Board(
       dimBoard: dimBoard,
       nDiv: nDiv,
+      listBoardColor: _listBoardColors,
       listTap: _listTap,
       listTupleDMotion: _listTupleDMotion,
       isPieceAbilityActive: _mapPieceAbilityActive.isNotEmpty,
@@ -176,20 +181,18 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
       listTupleAbsSpecialAbility: _listTupleAbsSpecialAbility,
       mapStatusSelf: _mapStatusSelf,
       mapStatusRival: _mapStatusRival,
-      colorSelf:
-          (_indexActivePlayer == 0 ? players.colorTeam0 : players.colorTeam1),
-      colorRival:
-          (_indexActivePlayer == 0 ? players.colorTeam1 : players.colorTeam0),
+      colorSelf: _listBoardColors[_indexActivePlayer],
+      colorRival: _listBoardColors[1 - _indexActivePlayer],
       isRivalSpecialSecret: widget.listSpecialAbilityName
           .map((e) => specials.mapSpecialAttributes[e][4] == 1)
           .toList()[1 - _indexActivePlayer],
     ));
     Color color0 = _toTranspose
-        ? (_indexActivePlayer == 1 ? players.colorTeam1 : players.colorTeam0)
-        : players.colorTeam0;
+        ? _listBoardColors[_indexActivePlayer]
+        : _listBoardColors[0];
     Color color1 = _toTranspose
-        ? (_indexActivePlayer == 1 ? players.colorTeam0 : players.colorTeam1)
-        : players.colorTeam1;
+        ? _listBoardColors[1 - _indexActivePlayer]
+        : _listBoardColors[1];
     map0.forEach((key, value) {
       listStack.addAll(value.map((e) => makePiece(dimBox, key, color0, e)));
     });
@@ -433,8 +436,8 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
     switch (_strPieceSelected) {
       case 'queen':
         if (index ==
-            pieces.mapAbilityName[_strPieceSelected]
-                .indexOf('Summon big papi') &&
+                pieces.mapAbilityName[_strPieceSelected]
+                    .indexOf('Summon big papi') &&
             _mapSelf['king'].isEmpty) {
           showInvalidSnackBar(context, strQueenKingError);
           return true;
@@ -444,8 +447,8 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
         break;
       case 'bishop':
         if (index ==
-            pieces.mapAbilityName[_strPieceSelected]
-                .indexOf('Lunar laser-guided ballistic missile') &&
+                pieces.mapAbilityName[_strPieceSelected]
+                    .indexOf('Lunar laser-guided ballistic missile') &&
             !(_listTap[0] == 0 || _listTap[0] == rMax)) {
           showInvalidSnackBar(context, strBishopLaunchError);
           return true;
@@ -455,8 +458,8 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
         break;
       case 'knight':
         if (index ==
-            pieces.mapAbilityName[_strPieceSelected]
-                .indexOf('Big-ass-horse') &&
+                pieces.mapAbilityName[_strPieceSelected]
+                    .indexOf('Big-ass-horse') &&
             !(checkInBounds([_listTap[0], _listTap[1] - 1]) &&
                 getPieceName(_mapSelf, [_listTap[0], _listTap[1] - 1]) ==
                     'pawn')) {
@@ -468,8 +471,8 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
         break;
       case 'pawn':
         if (index ==
-            pieces.mapAbilityName[_strPieceSelected]
-                .indexOf('I gotchu homie') &&
+                pieces.mapAbilityName[_strPieceSelected]
+                    .indexOf('I gotchu homie') &&
             !(_listTap[1] == rMax)) {
           showInvalidSnackBar(context, strPawnEdgeError);
           return true;
@@ -608,9 +611,11 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
         break;
       case 'pawn':
         if (_mapPieceAbilityActive.values.first ==
-            pieces.mapAbilityName[_strPieceSelected].indexOf('I gotchu homie')) {
+            pieces.mapAbilityName[_strPieceSelected]
+                .indexOf('I gotchu homie')) {
           setState(() {
-            mapRemoveAdd(_mapSelf, _mapGraveSelf, [true, true], _listTap, 'pawn', listNewTap);
+            mapRemoveAdd(_mapSelf, _mapGraveSelf, [true, true], _listTap,
+                'pawn', listNewTap);
             endTurn();
           });
         }
@@ -1506,6 +1511,7 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
 
 //region Turn functions
   void endTurn() {
+    performKingCheck();
     resetSelection();
     _nTurn++;
     bool isSamePlayer = _indexActivePlayer == _nTurn % 2;
@@ -1513,6 +1519,13 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
       _indexActivePlayer = _nTurn % 2;
       performFutureFunction();
       performTurnTranspositions();
+    }
+  }
+
+  void performKingCheck() {
+    _isRivalKingAlive = _mapGraveRival['king'] == 0;
+    if (!_isRivalKingAlive) {
+      setState(() {});
     }
   }
 
@@ -1669,7 +1682,13 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
     ]);
     initTimesSpecialAbilityMax();
     initPreGame();
+    initBoardColors();
     super.initState();
+  }
+
+  Future<void> initBoardColors() async {
+    _listBoardColors = await loadBoardColors();
+    setState(() {});
   }
 
   void initPreGame() {
@@ -1734,7 +1753,19 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
     String strAppBarText = isPreGame
         ? "${_indexActivePlayer == 0 ? players.strPlayer0 : players.strPlayer1} - Pre-Game Select"
         : "${_indexActivePlayer == 0 ? players.strPlayer0 : players.strPlayer1} - Turn ${_nTurn + 1}";
-    if (MediaQuery.of(context).orientation == Orientation.portrait) {
+    bool isBuildReady = MediaQuery.of(context).orientation == Orientation.portrait && _listBoardColors != null;
+    if (isBuildReady) {
+      if (!_isRivalKingAlive) {
+        Future.wait([
+          showDialog(
+              context: context,
+              builder: (context) {
+                return AlertDialog(
+                  content: Text('Game Over!'),
+                );
+              })
+        ]);
+      }
       return SafeArea(
         child: Scaffold(
           appBar: AppBar(
@@ -1771,78 +1802,99 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
                 ? players.colorTeam0
                 : players.colorTeam1),
           ),
-          body: Column(
-            children: [
-              Divider(
-                height: GameLayoutOffline.sizeDivider,
-                thickness: GameLayoutOffline.sizeDivider,
-                color: Colors.amberAccent,
-              ),
-              GestureDetector(
-                child: makeBoard(dimBoard, dimBox, _mapSelf, _mapRival),
-                onTapDown: (details) => functionTap(dimBoard, dimBox, details),
-              ),
-              Divider(
-                height: GameLayoutOffline.sizeDivider,
-                thickness: GameLayoutOffline.sizeDivider,
-                color: Colors.amberAccent,
-              ),
-              !isPreGame
-                  ? FittedBox(
-                      child: ToggleButtons(
-                        children: [
-                          Container(
-                            width: MediaQuery.of(context).size.width / 2,
-                            child: Text(
-                              'Special Ability',
-                              style: GameLayoutOffline.styleSub,
-                              textAlign: TextAlign.center,
+          body: WillPopScope(
+            child: Column(
+              children: [
+                Divider(
+                  height: GameLayoutOffline.sizeDivider,
+                  thickness: GameLayoutOffline.sizeDivider,
+                  color: Colors.amberAccent,
+                ),
+                GestureDetector(
+                  child: makeBoard(dimBoard, dimBox, _mapSelf, _mapRival),
+                  onTapDown: (details) =>
+                      functionTap(dimBoard, dimBox, details),
+                ),
+                Divider(
+                  height: GameLayoutOffline.sizeDivider,
+                  thickness: GameLayoutOffline.sizeDivider,
+                  color: Colors.amberAccent,
+                ),
+                !isPreGame
+                    ? FittedBox(
+                        child: ToggleButtons(
+                          children: [
+                            Container(
+                              width: MediaQuery.of(context).size.width / 2,
+                              child: Text(
+                                'Special Ability',
+                                style: GameLayoutOffline.styleSub,
+                                textAlign: TextAlign.center,
+                              ),
                             ),
-                          ),
-                          Container(
-                            width: MediaQuery.of(context).size.width / 2,
-                            child: Text(
-                              'Piece Ability',
-                              style: GameLayoutOffline.styleSub,
-                              textAlign: TextAlign.center,
+                            Container(
+                              width: MediaQuery.of(context).size.width / 2,
+                              child: Text(
+                                'Piece Ability',
+                                style: GameLayoutOffline.styleSub,
+                                textAlign: TextAlign.center,
+                              ),
                             ),
-                          ),
-                        ],
-                        borderRadius: BorderRadius.circular(
-                            GameLayoutOffline.sizeBorderRadius),
-                        isSelected: _listToggleAbility,
-                        color: Colors.white,
-                        borderColor: Theme.of(context).scaffoldBackgroundColor,
-                        fillColor: Colors.white,
-                        selectedColor:
-                            Theme.of(context).scaffoldBackgroundColor,
-                        onPressed: (index) {
-                          bool isPieceAbilityActive =
-                              _mapPieceAbilityActive.isNotEmpty;
-                          bool isSingleUseSpecialActive =
-                              _listTimesSpecialAbilityMax[_indexActivePlayer] !=
-                                      0 &&
-                                  _listIsSpecialAbilityActive[
-                                      _indexActivePlayer];
-                          if (!isPieceAbilityActive &&
-                              !isSingleUseSpecialActive) {
-                            setState(() {
-                              _listToggleAbility =
-                                  _listToggleAbility.map((e) => !e).toList();
-                            });
-                          }
-                        },
-                      ),
-                    )
-                  : Container(),
-              !isPreGame
-                  ? Expanded(
-                      child: _listToggleAbility[0]
-                          ? makeSpecialAbilitySection(context)
-                          : makePieceAbilitySection(context, _strPieceSelected),
-                    )
-                  : Container(),
-            ],
+                          ],
+                          borderRadius: BorderRadius.circular(
+                              GameLayoutOffline.sizeBorderRadius),
+                          isSelected: _listToggleAbility,
+                          color: Colors.white,
+                          borderColor:
+                              Theme.of(context).scaffoldBackgroundColor,
+                          fillColor: Colors.white,
+                          selectedColor:
+                              Theme.of(context).scaffoldBackgroundColor,
+                          onPressed: (index) {
+                            bool isPieceAbilityActive =
+                                _mapPieceAbilityActive.isNotEmpty;
+                            bool isSingleUseSpecialActive =
+                                _listTimesSpecialAbilityMax[
+                                            _indexActivePlayer] !=
+                                        0 &&
+                                    _listIsSpecialAbilityActive[
+                                        _indexActivePlayer];
+                            if (!isPieceAbilityActive &&
+                                !isSingleUseSpecialActive) {
+                              setState(() {
+                                _listToggleAbility =
+                                    _listToggleAbility.map((e) => !e).toList();
+                              });
+                            }
+                          },
+                        ),
+                      )
+                    : Container(),
+                !isPreGame
+                    ? Expanded(
+                        child: _listToggleAbility[0]
+                            ? makeSpecialAbilitySection(context)
+                            : makePieceAbilitySection(
+                                context, _strPieceSelected),
+                      )
+                    : Container(),
+              ],
+            ),
+            onWillPop: () async {
+              if (!_isToPop) {
+                showDialog(
+                    context: context,
+                    builder: (context) {
+                      return AlertDialog(
+                        content: Text('Tap back again to exit'),
+                      );
+                    });
+                _isToPop = !_isToPop;
+                return false;
+              } else {
+                return _isToPop;
+              }
+            },
           ),
         ),
       );
