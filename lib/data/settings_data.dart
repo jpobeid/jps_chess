@@ -28,3 +28,6 @@ const List<int> listAlpha = [
   150,
   100,
 ];
+
+const String strRulesUrl =
+    "https://firebasestorage.googleapis.com/v0/b/jp-s-chess.appspot.com/o/JP's%20Chess%20Rules.pdf?alt=media&token=fd5875c5-a33d-4417-94e2-0ec5a9319320";

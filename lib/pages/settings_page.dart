@@ -219,11 +219,10 @@ Row _makeModeButton(BuildContext context, double fractionHeightMode,
           onPressed: () async {
             switch (index) {
               case 0:
-                const url = "https://firebasestorage.googleapis.com/v0/b/jp-s-chess.appspot.com/o/JP's%20Chess%20Rules.pdf?alt=media&token=d4443b7d-e3f0-4c5b-994e-e3d8e82c7e4f";
-                if (await canLaunch(url)) {
-                  launch(url);
+                if (await canLaunch(settings.strRulesUrl)) {
+                  launch(settings.strRulesUrl);
                 } else {
-                  throw 'Could not launch $url';
+                  throw 'Could not launch ${settings.strRulesUrl}';
                 }
                 break;
               case 1:

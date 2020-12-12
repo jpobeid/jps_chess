@@ -12,9 +12,12 @@ import 'package:jps_chess/data/player_data.dart' as players;
 import 'package:jps_chess/data/special_data.dart' as specials;
 import 'package:jps_chess/functions/motion_functions.dart';
 import 'package:jps_chess/functions/piece_ability_functions.dart';
+import 'package:jps_chess/functions/settings_functions.dart';
 import 'package:jps_chess/functions/special_ability_functions.dart';
 import 'package:jps_chess/widgets/board.dart';
 import 'package:jps_chess/widgets/disconnect_overlay.dart';
+import 'package:jps_chess/widgets/game_over_overlay.dart';
+import 'package:jps_chess/functions/game_over_functions.dart';
 
 int nDiv = 8;
 int rMax = nDiv - 1;
@@ -86,6 +89,7 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
     'fixed': [],
     'forced': [],
     'targeted': [],
+    'cannotCheckmate': [],
     'timer': [],
     'mySpecial': [],
     'mySpecialLabel': [],
@@ -95,12 +99,14 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
     'fixed': [],
     'forced': [],
     'targeted': [],
+    'cannotCheckmate': [],
     'timer': [],
     'mySpecial': [],
     'mySpecialLabel': [],
     'mySpecialSecret': [],
   };
-
+  List<Color> _listBoardColors;
+  List<int> _listGameOverByKing = [0, 0];
   String _strPieceSelected;
   List<int> _listTap = [];
   List<List<int>> _listTupleDMotion = [];
@@ -124,45 +130,44 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
 
   Container makeBoard(double dimBoard, double dimBox,
       Map<String, List<List<int>>> map0, Map<String, List<List<int>>> map1) {
-    List<Widget> listStack = [];
-    listStack.add(Board(
-      dimBoard: dimBoard,
-      nDiv: nDiv,
-      listTap: _listTap,
-      listTupleDMotion: _listTupleDMotion,
-      isPieceAbilityActive: _mapPieceAbilityActive.isNotEmpty,
-      listTupleDPieceAbility: _listTupleDPieceAbility,
-      isSpecialAbilityActive: _isSpecialAbilityActiveProper,
-      listTupleAbsSpecialAbility: _listTupleAbsSpecialAbility,
-      mapStatusSelf: _mapStatusSelf,
-      mapStatusRival: _mapStatusRival,
-      colorSelf:
-          (_indexPlayerProper == 0 ? players.colorTeam0 : players.colorTeam1),
-      colorRival:
-          (_indexPlayerProper == 0 ? players.colorTeam1 : players.colorTeam0),
-      isRivalSpecialSecret: _listSpecialAbilityNameProper
-          .map((e) => specials.mapSpecialAttributes[e][4] == 1)
-          .toList()[1 - _indexPlayerProper],
-    ));
-    Color color0 = _toTransposeBoard
-        ? (_indexActivePlayer == 0 ? players.colorTeam0 : players.colorTeam1)
-        : (_indexPlayerProper == 0 ? players.colorTeam0 : players.colorTeam1);
-    Color color1 = _toTransposeBoard
-        ? (_indexActivePlayer == 0 ? players.colorTeam1 : players.colorTeam0)
-        : (_indexPlayerProper == 0 ? players.colorTeam1 : players.colorTeam0);
-    map0.forEach((key, value) {
-      listStack.addAll(value.map((e) => makePiece(dimBox, key, color0, e)));
-    });
-    map1.forEach((key, value) {
-      listStack.addAll(value.map((e) => makePiece(dimBox, key, color1, e)));
-    });
-    return Container(
-      height: dimBoard,
-      width: dimBoard,
-      child: Stack(
-        children: listStack,
-      ),
-    );
+    if (_listBoardColors != null) {
+      List<Widget> listStack = [];
+      listStack.add(Board(
+        dimBoard: dimBoard,
+        nDiv: nDiv,
+        listBoardColor: _listBoardColors,
+        listTap: _listTap,
+        listTupleDMotion: _listTupleDMotion,
+        isPieceAbilityActive: _mapPieceAbilityActive.isNotEmpty,
+        listTupleDPieceAbility: _listTupleDPieceAbility,
+        isSpecialAbilityActive: _isSpecialAbilityActiveProper,
+        listTupleAbsSpecialAbility: _listTupleAbsSpecialAbility,
+        mapStatusSelf: _mapStatusSelf,
+        mapStatusRival: _mapStatusRival,
+        colorSelf: _listBoardColors[_indexPlayerProper],
+        colorRival: _listBoardColors[1 - _indexPlayerProper],
+        isRivalSpecialSecret: _listSpecialAbilityNameProper
+            .map((e) => specials.mapSpecialAttributes[e][4] == 1)
+            .toList()[1 - _indexPlayerProper],
+      ));
+      Color color0 = _listBoardColors[_indexPlayerProper];
+      Color color1 = _listBoardColors[1 - _indexPlayerProper];
+      map0.forEach((key, value) {
+        listStack.addAll(value.map((e) => makePiece(dimBox, key, color0, e)));
+      });
+      map1.forEach((key, value) {
+        listStack.addAll(value.map((e) => makePiece(dimBox, key, color1, e)));
+      });
+      return Container(
+        height: dimBoard,
+        width: dimBoard,
+        child: Stack(
+          children: listStack,
+        ),
+      );
+    } else {
+      return Container();
+    }
   }
 
   void mapRemoveAdd(
@@ -237,6 +242,18 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
               _indexPlayerProper, 'You just attacked the mesmer...');
         }
       });
+      int result = checkGameOverByKing(
+        _mapGraveSelf,
+        _mapGraveRival,
+        (_mapStatusSelf['cannotCheckmate'] != null &&
+            _mapStatusSelf['cannotCheckmate'].isNotEmpty),
+        (_mapStatusRival['cannotCheckmate'] != null &&
+            _mapStatusRival['cannotCheckmate'].isNotEmpty),
+      );
+      if (result != 0) {
+        _listGameOverByKing = [result, _indexPlayerProper];
+        uploadGameData(_nTurn, _indexActivePlayer);
+      }
     }
   }
 
@@ -453,6 +470,7 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
   void showInvalidSnackBar(BuildContext context, String strMessage) {
     const TextStyle styleMessage = TextStyle(
         color: Colors.white, fontWeight: FontWeight.normal, fontSize: 24);
+    // ignore: deprecated_member_use
     Scaffold.of(context).showSnackBar(SnackBar(
       content: Text(
         strMessage,
@@ -739,6 +757,8 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
                                       context, ['Confirm use', 'Do not use']);
                                 });
                             if (indexConfirmation == 0) {
+                              addCannotCheckmateStatus(
+                                  mapStatusTimerAdd, _mapStatusSelf);
                               _isSpecialAbilityActiveProper = true;
                               primeSpecialAbility(strSpecialAbilityName);
                             }
@@ -1206,6 +1226,7 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
                   listNewTap,
                   false,
                 );
+                addCannotCheckmateStatus(mapStatusTimerAdd, _mapStatusSelf);
                 uploadDeclaration((1 - _indexPlayerProper),
                     'Opponent performed a Necromancer revival of ${strPlayer == 'My' ? 'their' : 'your'} $strPieceName');
                 completeSpecialAbility(true, true, true);
@@ -1470,6 +1491,8 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
                 !toRepeatTurn) {
               completeSpecialAbility(true, true, true);
             } else if (toRepeatTurn) {
+              addCannotCheckmateStatus(mapStatusTimerAdd, _mapStatusSelf);
+              uploadGameData(_nTurn, _indexActivePlayer);
               resetSelection();
               completeSpecialAbility(true, false, true);
             } else {
@@ -1543,6 +1566,7 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
       0: 'fixed',
       1: 'forced',
       2: 'targeted',
+      3: 'cannotCheckmate'
     };
     List<List<int>> listListSubTimer;
     int i;
@@ -1567,8 +1591,10 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
         }
         i++;
       });
+      int j = 0;
       listI.forEach((element) {
-        listListSubTimer.removeAt(0);
+        listListSubTimer.removeAt(element - j);
+        j++;
       });
       mapStatus.addAll({'timer': listListSubTimer});
     }
@@ -1591,6 +1617,8 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
           mapRemoveAdd(_mapRival, _mapGraveRival, [true, false],
               listCoordinates, '', [], false);
         }
+        break;
+      case 'cannotCheckmate':
         break;
       default:
         break;
@@ -1717,6 +1745,7 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
           'fixed': [],
           'forced': [],
           'targeted': [],
+          'cannotCheckmate': [],
           'timer': [],
           'mySpecial': [],
           'mySpecialLabel': [],
@@ -1727,6 +1756,7 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
           'fixed': [],
           'forced': [],
           'targeted': [],
+          'cannotCheckmate': [],
           'timer': [],
           'mySpecial': [],
           'mySpecialLabel': [],
@@ -1756,6 +1786,7 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
   }
 
   Future<void> initProperGameData() async {
+    _listBoardColors = await loadBoardColors();
     DataSnapshot snapshot =
         await _databaseReference.child(datas.strGameData).once();
     Map mapSnapshotGame = snapshot.value[widget.strServerName];
@@ -1887,6 +1918,8 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
                               [datas.strKey3DeclarationMessage]
                     }
                   : _mapDeclaration;
+          _listGameOverByKing =
+              List<int>.from(event.snapshot.value[datas.strKey2listGameOverByKing]);
         });
         _nTurn = event.snapshot.value[datas.strKey2NTurn];
         _indexActivePlayer =
@@ -1922,6 +1955,7 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
         .update({
       datas.strKey2NTurn: nTurn,
       datas.strKey2IndexActivePlayer: indexActivePlayer,
+      datas.strKey2listGameOverByKing: _listGameOverByKing,
     });
     //Upload Self data
     _databaseReference
@@ -1990,76 +2024,7 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    bool anyCriticalNulls = (_nTurn == null ||
-        _indexActivePlayer == null ||
-        _mapSelf == null ||
-        _mapRival == null);
-    if (MediaQuery.of(context).orientation == Orientation.portrait &&
-        !anyCriticalNulls) {
-      bool isPreGame;
-      double dimBoard;
-      double dimBox;
-      String strAppBarText;
-      primeSpecialAbilityFromBuild();
-      isPreGame = _nTurn < 0;
-      dimBoard = math.min(MediaQuery.of(context).size.height,
-          MediaQuery.of(context).size.width);
-      dimBox = dimBoard / nDiv;
-      strAppBarText = isPreGame
-          ? "${_indexActivePlayer == 0 ? players.strPlayer0 : players.strPlayer1} - Pre-Game Select"
-          : "${_indexActivePlayer == 0 ? players.strPlayer0 : players.strPlayer1} - Turn ${_nTurn + 1}";
-      bool toDisplayDeclaration = _mapDeclaration != null &&
-          _mapDeclaration.keys.first == _indexPlayerProper;
-      if (toDisplayDeclaration) {
-        _databaseReference
-            .child(datas.strGameData)
-            .child(widget.strServerName)
-            .child(datas.strKey1VarGlobal)
-            .child(datas.strKey2DeclarationMaker)
-            .remove();
-        Future.delayed(Duration.zero, () {
-          String strMessage = _mapDeclaration.values.first;
-          _mapDeclaration = null;
-          return showDialog(
-              barrierDismissible: true,
-              context: context,
-              child: AlertDialog(
-                title: Text(
-                  strMessage,
-                  textAlign: TextAlign.center,
-                ),
-              ));
-        });
-      }
-      if (_indexPlayerProper == _indexActivePlayer) {
-        return Stack(
-          children: [
-            makeMainScaffold(isPreGame, dimBoard, dimBox, strAppBarText),
-            DisconnectionOverlay(
-              nPlayers: _nPlayers,
-            ),
-          ],
-        );
-      } else {
-        return Stack(
-          children: [
-            IgnorePointer(
-              child:
-                  makeMainScaffold(isPreGame, dimBoard, dimBox, strAppBarText),
-            ),
-            DisconnectionOverlay(
-              nPlayers: _nPlayers,
-            ),
-          ],
-        );
-      }
-    } else {
-      return Scaffold();
-    }
-  }
-
+  //region Build functions
   SafeArea makeMainScaffold(
       bool isPreGame, double dimBoard, double dimBox, String strAppBarText) {
     const styleTextPass =
@@ -2144,7 +2109,8 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
                         color: Colors.white,
                         borderColor: Theme.of(context).scaffoldBackgroundColor,
                         fillColor: Colors.white,
-                        selectedColor: Theme.of(context).scaffoldBackgroundColor,
+                        selectedColor:
+                            Theme.of(context).scaffoldBackgroundColor,
                         onPressed: (index) {
                           bool isPieceAbilityActive =
                               _mapPieceAbilityActive.isNotEmpty;
@@ -2156,8 +2122,9 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
                           if (!isPieceAbilityActive &&
                               !isSingleUseSpecialActive) {
                             setState(() {
-                              listToggleAbilityProper =
-                                  listToggleAbilityProper.map((e) => !e).toList();
+                              listToggleAbilityProper = listToggleAbilityProper
+                                  .map((e) => !e)
+                                  .toList();
                             });
                           }
                         },
@@ -2175,11 +2142,13 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
           ),
           onWillPop: () async {
             if (!_isToPop) {
-              showDialog(context: context, builder: (context){
-                return AlertDialog(
-                  content: Text('Tap back again to exit'),
-                );
-              });
+              showDialog(
+                  context: context,
+                  builder: (context) {
+                    return AlertDialog(
+                      content: Text('Tap back again to exit'),
+                    );
+                  });
               _isToPop = !_isToPop;
               return false;
             } else {
@@ -2189,5 +2158,96 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
         ),
       ),
     );
+  }
+
+  GameOverOverlay makeGameOverOverlay() {
+    const String strMessageLose = 'Game over\n\nYou lose...';
+    const String strMessageWin = 'Game over\n\nYou win!!!';
+    bool isWinner = (_listGameOverByKing.first == 2 &&
+        _indexActivePlayer == 1 - _indexPlayerProper) || (_listGameOverByKing.first == 1 &&
+        _indexActivePlayer == _indexPlayerProper);
+    String strMessageDisplayed = isWinner ? strMessageWin : strMessageLose;
+    return GameOverOverlay(
+      strMessage: strMessageDisplayed,
+      colorMessage:
+          _indexPlayerProper == 0 ? players.colorTeam0 : players.colorTeam1,
+    );
+  }
+
+  //endregion Build functions
+
+  @override
+  Widget build(BuildContext context) {
+    bool anyCriticalNulls = (_nTurn == null ||
+        _indexActivePlayer == null ||
+        _mapSelf == null ||
+        _mapRival == null);
+    bool isBuildReady =
+        MediaQuery.of(context).orientation == Orientation.portrait &&
+            _listBoardColors != null;
+    if (isBuildReady && !anyCriticalNulls) {
+      bool isPreGame;
+      double dimBoard;
+      double dimBox;
+      String strAppBarText;
+      primeSpecialAbilityFromBuild();
+      isPreGame = _nTurn < 0;
+      dimBoard = math.min(MediaQuery.of(context).size.height,
+          MediaQuery.of(context).size.width);
+      dimBox = dimBoard / nDiv;
+      strAppBarText = isPreGame
+          ? "${_indexActivePlayer == 0 ? players.strPlayer0 : players.strPlayer1} - Pre-Game Select"
+          : "${_indexActivePlayer == 0 ? players.strPlayer0 : players.strPlayer1} - Turn ${_nTurn + 1}";
+      bool toDisplayDeclaration = _mapDeclaration != null &&
+          _mapDeclaration.keys.first == _indexPlayerProper;
+      if (toDisplayDeclaration) {
+        _databaseReference
+            .child(datas.strGameData)
+            .child(widget.strServerName)
+            .child(datas.strKey1VarGlobal)
+            .child(datas.strKey2DeclarationMaker)
+            .remove();
+        Future.delayed(Duration.zero, () {
+          String strMessage = _mapDeclaration.values.first;
+          _mapDeclaration = null;
+          return showDialog(
+              barrierDismissible: true,
+              context: context,
+              // ignore: deprecated_member_use
+              child: AlertDialog(
+                title: Text(
+                  strMessage,
+                  textAlign: TextAlign.center,
+                ),
+              ));
+        });
+      }
+      if (_indexPlayerProper == _indexActivePlayer) {
+        return Stack(
+          children: [
+            makeMainScaffold(isPreGame, dimBoard, dimBox, strAppBarText),
+            DisconnectionOverlay(
+              nPlayers: _nPlayers,
+            ),
+            _listGameOverByKing.first != 0 ? makeGameOverOverlay() : Container(),
+          ],
+        );
+      } else {
+        return Stack(
+          children: [
+            IgnorePointer(
+              child:
+                  makeMainScaffold(isPreGame, dimBoard, dimBox, strAppBarText),
+            ),
+            DisconnectionOverlay(
+              nPlayers: _nPlayers,
+            ),
+            _listGameOverByKing.first != 0 ? makeGameOverOverlay() : Container(),
+          ],
+        );
+      }
+    } else {
+      return Scaffold();
+    }
   }
 }

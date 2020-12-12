@@ -10,6 +10,8 @@ import 'package:jps_chess/functions/piece_ability_functions.dart';
 import 'package:jps_chess/functions/special_ability_functions.dart';
 import 'package:flutter/services.dart';
 import 'package:jps_chess/functions/settings_functions.dart';
+import 'package:jps_chess/widgets/game_over_overlay.dart';
+import 'package:jps_chess/functions/game_over_functions.dart';
 
 int nDiv = 8;
 int rMax = nDiv - 1;
@@ -40,7 +42,7 @@ class GameLayoutOffline extends StatefulWidget {
 class _GameLayoutOfflineState extends State<GameLayoutOffline> {
   int _nTurn;
   int _indexActivePlayer;
-  bool _toTranspose = true;
+  bool _toTransposeBoard = true;
   bool _isToPop = false;
 
   Map<String, List<List<int>>> _mapSelf = {
@@ -123,6 +125,7 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
     'fixed': [],
     'forced': [],
     'targeted': [],
+    'cannotCheckmate': [],
     'timer': [],
     'mySpecial': [],
     'mySpecialLabel': [],
@@ -131,12 +134,13 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
     'fixed': [],
     'forced': [],
     'targeted': [],
+    'cannotCheckmate': [],
     'timer': [],
     'mySpecial': [],
     'mySpecialLabel': [],
   };
-  bool _isRivalKingAlive = true;
   List<Color> _listBoardColors;
+  List<int> _listGameOverByKing = [0, 0];
   Map<int, String> _mapFutureBuilder = {};
   Map<int, List<dynamic>> _mapFutureBuilderArgs = {};
   List<bool> _listToggleAbility = [true, false];
@@ -187,10 +191,10 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
           .map((e) => specials.mapSpecialAttributes[e][4] == 1)
           .toList()[1 - _indexActivePlayer],
     ));
-    Color color0 = _toTranspose
+    Color color0 = _toTransposeBoard
         ? _listBoardColors[_indexActivePlayer]
         : _listBoardColors[0];
-    Color color1 = _toTranspose
+    Color color1 = _toTransposeBoard
         ? _listBoardColors[1 - _indexActivePlayer]
         : _listBoardColors[1];
     map0.forEach((key, value) {
@@ -273,6 +277,17 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
           _mapStatusRival['mySpecial'].clear();
         }
       });
+      int result = checkGameOverByKing(
+        _mapGraveSelf,
+        _mapGraveRival,
+        _mapStatusSelf['cannotCheckmate'].isNotEmpty,
+        _mapStatusRival['cannotCheckmate'].isNotEmpty,
+      );
+      if (result != 0) {
+        setState(() {
+          _listGameOverByKing = [result, _indexActivePlayer];
+        });
+      }
     }
   }
 
@@ -722,7 +737,7 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
                       size: styleHead2.fontSize,
                     ),
                   ),
-                  onPressed: () {
+                  onPressed: () async {
                     if (isSpecialAbilitySingleUse &&
                         isSpecialAbilityAvailable) {
                       resetSelection();
@@ -771,9 +786,19 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
                         case 'Puppet Master':
                           if (_mapSelf['pawn'].isNotEmpty &&
                               !isSpecialAbilityActive) {
-                            _listIsSpecialAbilityActive[_indexActivePlayer] =
-                                true;
-                            primeSpecialAbility(strSpecialAbilityName);
+                            int indexConfirmation = await showDialog(
+                                context: (context),
+                                builder: (context) {
+                                  return makeSpecialAbilityDialog(
+                                      context, ['Confirm use', 'Do not use']);
+                                });
+                            if (indexConfirmation == 0) {
+                              addCannotCheckmateStatus(
+                                  mapStatusTimerAdd, _mapStatusSelf);
+                              _listIsSpecialAbilityActive[_indexActivePlayer] =
+                                  true;
+                              primeSpecialAbility(strSpecialAbilityName);
+                            }
                           } else if (isSpecialAbilityActive) {
                             canSpecialAbilityReset
                                 ? resetSpecialAbility()
@@ -1234,6 +1259,7 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
                     [],
                     strPieceName,
                     listNewTap);
+                addCannotCheckmateStatus(mapStatusTimerAdd, _mapStatusSelf);
                 completeSpecialAbility(true, true, true);
               }
               break;
@@ -1492,10 +1518,9 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
                 !toRepeatTurn) {
               completeSpecialAbility(true, true, true);
             } else if (toRepeatTurn) {
-              setState(() {
-                resetSelection();
-                completeSpecialAbility(true, false, true);
-              });
+              addCannotCheckmateStatus(mapStatusTimerAdd, _mapStatusSelf);
+              resetSelection();
+              completeSpecialAbility(true, false, true);
             } else {
               endTurn();
             }
@@ -1511,7 +1536,6 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
 
 //region Turn functions
   void endTurn() {
-    performKingCheck();
     resetSelection();
     _nTurn++;
     bool isSamePlayer = _indexActivePlayer == _nTurn % 2;
@@ -1519,13 +1543,6 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
       _indexActivePlayer = _nTurn % 2;
       performFutureFunction();
       performTurnTranspositions();
-    }
-  }
-
-  void performKingCheck() {
-    _isRivalKingAlive = _mapGraveRival['king'] == 0;
-    if (!_isRivalKingAlive) {
-      setState(() {});
     }
   }
 
@@ -1549,7 +1566,7 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
   }
 
   Map<String, List<List<int>>> transposeMap(Map<String, List<List<int>>> map) {
-    if (_toTranspose) {
+    if (_toTransposeBoard) {
       //Transpose pieces
       Map<String, List<List<int>>> mapTransposed = {};
       map.keys.forEach((element) {
@@ -1575,6 +1592,7 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
       0: 'fixed',
       1: 'forced',
       2: 'targeted',
+      3: 'cannotCheckmate',
     };
     List<List<int>> listListSubTimer;
     int i;
@@ -1599,8 +1617,10 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
         }
         i++;
       });
+      int j = 0;
       listI.forEach((element) {
-        listListSubTimer.removeAt(0);
+        listListSubTimer.removeAt(element - j);
+        j++;
       });
       mapStatus.addAll({'timer': listListSubTimer});
     }
@@ -1623,6 +1643,8 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
           mapRemoveAdd(_mapRival, _mapGraveRival, [true, false],
               listCoordinates, '', []);
         }
+        break;
+      case 'cannotCheckmate':
         break;
       default:
         break;
@@ -1740,12 +1762,10 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
+  //region Build functions
+  Scaffold makeMainScaffold() {
     const styleTextPass =
         TextStyle(fontSize: 18, fontWeight: FontWeight.normal);
-
-    primeSpecialAbilityFromBuild();
     bool isPreGame = _nTurn < 0;
     double dimBoard = math.min(
         MediaQuery.of(context).size.height, MediaQuery.of(context).size.width);
@@ -1753,150 +1773,161 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
     String strAppBarText = isPreGame
         ? "${_indexActivePlayer == 0 ? players.strPlayer0 : players.strPlayer1} - Pre-Game Select"
         : "${_indexActivePlayer == 0 ? players.strPlayer0 : players.strPlayer1} - Turn ${_nTurn + 1}";
-    bool isBuildReady = MediaQuery.of(context).orientation == Orientation.portrait && _listBoardColors != null;
-    if (isBuildReady) {
-      if (!_isRivalKingAlive) {
-        Future.wait([
-          showDialog(
-              context: context,
-              builder: (context) {
-                return AlertDialog(
-                  content: Text('Game Over!'),
-                );
-              })
-        ]);
-      }
-      return SafeArea(
-        child: Scaffold(
-          appBar: AppBar(
-            automaticallyImplyLeading: false,
-            actions: [
-              FlatButton.icon(
-                icon: Icon(Icons.arrow_forward_ios),
-                label: Text(
-                  'Pass',
-                  style: styleTextPass,
-                ),
-                onPressed: () {
-                  bool isSingleUseSpecialAbilityActive =
-                      _listIsSpecialAbilityActive[_indexActivePlayer] &&
-                          specials.mapSpecialAttributes[
-                                  widget.listSpecialAbilityName[
-                                      _indexActivePlayer]][0] !=
-                              0;
-                  bool isPieceAbilityActive = _mapPieceAbilityActive.isNotEmpty;
-                  if (!isPreGame &&
-                      !isSingleUseSpecialAbilityActive &&
-                      !isPieceAbilityActive) {
-                    setState(() {
-                      endTurn();
-                    });
-                  }
-                },
-              ),
-            ],
-            title: Text(
-              strAppBarText,
+
+    return Scaffold(
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        actions: [
+          FlatButton.icon(
+            icon: Icon(Icons.arrow_forward_ios),
+            label: Text(
+              'Pass',
+              style: styleTextPass,
             ),
-            backgroundColor: (_indexActivePlayer == 0
-                ? players.colorTeam0
-                : players.colorTeam1),
-          ),
-          body: WillPopScope(
-            child: Column(
-              children: [
-                Divider(
-                  height: GameLayoutOffline.sizeDivider,
-                  thickness: GameLayoutOffline.sizeDivider,
-                  color: Colors.amberAccent,
-                ),
-                GestureDetector(
-                  child: makeBoard(dimBoard, dimBox, _mapSelf, _mapRival),
-                  onTapDown: (details) =>
-                      functionTap(dimBoard, dimBox, details),
-                ),
-                Divider(
-                  height: GameLayoutOffline.sizeDivider,
-                  thickness: GameLayoutOffline.sizeDivider,
-                  color: Colors.amberAccent,
-                ),
-                !isPreGame
-                    ? FittedBox(
-                        child: ToggleButtons(
-                          children: [
-                            Container(
-                              width: MediaQuery.of(context).size.width / 2,
-                              child: Text(
-                                'Special Ability',
-                                style: GameLayoutOffline.styleSub,
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                            Container(
-                              width: MediaQuery.of(context).size.width / 2,
-                              child: Text(
-                                'Piece Ability',
-                                style: GameLayoutOffline.styleSub,
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                          ],
-                          borderRadius: BorderRadius.circular(
-                              GameLayoutOffline.sizeBorderRadius),
-                          isSelected: _listToggleAbility,
-                          color: Colors.white,
-                          borderColor:
-                              Theme.of(context).scaffoldBackgroundColor,
-                          fillColor: Colors.white,
-                          selectedColor:
-                              Theme.of(context).scaffoldBackgroundColor,
-                          onPressed: (index) {
-                            bool isPieceAbilityActive =
-                                _mapPieceAbilityActive.isNotEmpty;
-                            bool isSingleUseSpecialActive =
-                                _listTimesSpecialAbilityMax[
-                                            _indexActivePlayer] !=
-                                        0 &&
-                                    _listIsSpecialAbilityActive[
-                                        _indexActivePlayer];
-                            if (!isPieceAbilityActive &&
-                                !isSingleUseSpecialActive) {
-                              setState(() {
-                                _listToggleAbility =
-                                    _listToggleAbility.map((e) => !e).toList();
-                              });
-                            }
-                          },
-                        ),
-                      )
-                    : Container(),
-                !isPreGame
-                    ? Expanded(
-                        child: _listToggleAbility[0]
-                            ? makeSpecialAbilitySection(context)
-                            : makePieceAbilitySection(
-                                context, _strPieceSelected),
-                      )
-                    : Container(),
-              ],
-            ),
-            onWillPop: () async {
-              if (!_isToPop) {
-                showDialog(
-                    context: context,
-                    builder: (context) {
-                      return AlertDialog(
-                        content: Text('Tap back again to exit'),
-                      );
-                    });
-                _isToPop = !_isToPop;
-                return false;
-              } else {
-                return _isToPop;
+            onPressed: () {
+              bool isSingleUseSpecialAbilityActive =
+                  _listIsSpecialAbilityActive[_indexActivePlayer] &&
+                      specials.mapSpecialAttributes[widget
+                              .listSpecialAbilityName[_indexActivePlayer]][0] !=
+                          0;
+              bool isPieceAbilityActive = _mapPieceAbilityActive.isNotEmpty;
+              if (!isPreGame &&
+                  !isSingleUseSpecialAbilityActive &&
+                  !isPieceAbilityActive) {
+                setState(() {
+                  endTurn();
+                });
               }
             },
           ),
+        ],
+        title: Text(
+          strAppBarText,
         ),
+        backgroundColor:
+            (_indexActivePlayer == 0 ? players.colorTeam0 : players.colorTeam1),
+      ),
+      body: WillPopScope(
+        child: Column(
+          children: [
+            Divider(
+              height: GameLayoutOffline.sizeDivider,
+              thickness: GameLayoutOffline.sizeDivider,
+              color: Colors.amberAccent,
+            ),
+            GestureDetector(
+              child: makeBoard(dimBoard, dimBox, _mapSelf, _mapRival),
+              onTapDown: (details) => functionTap(dimBoard, dimBox, details),
+            ),
+            Divider(
+              height: GameLayoutOffline.sizeDivider,
+              thickness: GameLayoutOffline.sizeDivider,
+              color: Colors.amberAccent,
+            ),
+            !isPreGame
+                ? FittedBox(
+                    child: ToggleButtons(
+                      children: [
+                        Container(
+                          width: MediaQuery.of(context).size.width / 2,
+                          child: Text(
+                            'Special Ability',
+                            style: GameLayoutOffline.styleSub,
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        Container(
+                          width: MediaQuery.of(context).size.width / 2,
+                          child: Text(
+                            'Piece Ability',
+                            style: GameLayoutOffline.styleSub,
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ],
+                      borderRadius: BorderRadius.circular(
+                          GameLayoutOffline.sizeBorderRadius),
+                      isSelected: _listToggleAbility,
+                      color: Colors.white,
+                      borderColor: Theme.of(context).scaffoldBackgroundColor,
+                      fillColor: Colors.white,
+                      selectedColor: Theme.of(context).scaffoldBackgroundColor,
+                      onPressed: (index) {
+                        bool isPieceAbilityActive =
+                            _mapPieceAbilityActive.isNotEmpty;
+                        bool isSingleUseSpecialActive =
+                            _listTimesSpecialAbilityMax[_indexActivePlayer] !=
+                                    0 &&
+                                _listIsSpecialAbilityActive[_indexActivePlayer];
+                        if (!isPieceAbilityActive &&
+                            !isSingleUseSpecialActive) {
+                          setState(() {
+                            _listToggleAbility =
+                                _listToggleAbility.map((e) => !e).toList();
+                          });
+                        }
+                      },
+                    ),
+                  )
+                : Container(),
+            !isPreGame
+                ? Expanded(
+                    child: _listToggleAbility[0]
+                        ? makeSpecialAbilitySection(context)
+                        : makePieceAbilitySection(context, _strPieceSelected),
+                  )
+                : Container(),
+          ],
+        ),
+        onWillPop: () async {
+          if (!_isToPop) {
+            showDialog(
+                context: context,
+                builder: (context) {
+                  return AlertDialog(
+                    content: Text('Tap back again to exit'),
+                  );
+                });
+            _isToPop = !_isToPop;
+            return false;
+          } else {
+            return _isToPop;
+          }
+        },
+      ),
+    );
+  }
+
+  GameOverOverlay makeGameOverOverlay() {
+    const String strMessageLose = 'Game over\n\nYou lose...';
+    const String strMessageWin = 'Game over\n\nYou win!!!';
+    return GameOverOverlay(
+      strMessage:
+          _listGameOverByKing.first == 1 ? strMessageLose : strMessageWin,
+      colorMessage: _listGameOverByKing.last == 0
+          ? players.colorTeam0
+          : players.colorTeam1,
+    );
+  }
+
+  //endregion Build functions
+
+  @override
+  Widget build(BuildContext context) {
+    primeSpecialAbilityFromBuild();
+    bool isBuildReady =
+        MediaQuery.of(context).orientation == Orientation.portrait &&
+            _listBoardColors != null;
+    if (isBuildReady) {
+      return SafeArea(
+        child: _listGameOverByKing.first != 0
+            ? Stack(
+                children: [
+                  makeMainScaffold(),
+                  makeGameOverOverlay(),
+                ],
+              )
+            : makeMainScaffold(),
       );
     } else {
       return Scaffold();

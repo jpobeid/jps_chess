@@ -68,12 +68,12 @@ class _LobbyPageState extends State<LobbyPage> {
       datas.strKey2Uid: _user.uid,
       datas.strKey2IndexPlayer: indexPlayer,
     };
-    //Set indexActivePlayer to 0 && nPlayers to 2
+    //Set indexActivePlayer to 0 && nPlayers to 2 && intGameOverByKing to 0
     _databaseReference
         .child(datas.strGameData)
         .child(widget.strServerName)
         .child(datas.strKey1VarGlobal)
-        .update({datas.strKey2IndexActivePlayer: 0, datas.strKey2NPlayers: 2});
+        .update({datas.strKey2IndexActivePlayer: 0, datas.strKey2NPlayers: 2, datas.strKey2listGameOverByKing: [0, 0],});
     //Set user profile properties
     mapUserProperty.forEach((key, value) {
       _databaseReference

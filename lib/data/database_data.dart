@@ -14,6 +14,7 @@ const String strKey2IndexActivePlayer = 'indexActivePlayer';
 const String strKey2NTurn = 'nTurn';
 const String strKey2DeclarationMaker = 'declarationMaker';
 const String strKey2FutureMaker = 'futureMaker';
+const String strKey2listGameOverByKing = 'listGameOverByKing';
 //Level 3 keys - declarationMaker
 const String strKey3DeclarationIndexTargetPlayer = 'indexTargetPlayer';
 const String strKey3DeclarationMessage = 'strMessage';
