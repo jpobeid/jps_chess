@@ -1,7 +1,8 @@
 import 'package:flutter_icons/flutter_icons.dart';
 import 'package:flutter/material.dart';
 
-const nDiv = 8;
+const int nDiv = 8;
+int rMax = nDiv - 1;
 
 const List<String> listPieceName = [
   'king',

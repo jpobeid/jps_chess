@@ -140,6 +140,10 @@ class _LobbyPageState extends State<LobbyPage> {
                   style: LobbyPage.styleHead2,
                 ),
                 onPressed: () {
+                  if (_nLobby0 == 1) {
+                    _databaseReference.child(datas.strLobbyData).child(widget.strServerName).remove();
+                    _databaseReference.child(datas.strServerData).child(widget.strServerName).remove();
+                  }
                   Navigator.pop(context);
                 },
               ),

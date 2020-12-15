@@ -1,11 +1,12 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
-import 'package:jps_chess/services/auth.dart';
-import 'dart:math' as math;
 import 'package:jps_chess/data/database_data.dart' as datas;
+import 'package:jps_chess/services/auth.dart';
+import 'package:jps_chess/functions/snack_bar_functions.dart';
 
 class LoginPage extends StatefulWidget {
   static const routeName = '/login-page';
@@ -216,8 +217,8 @@ class _LoginPageState extends State<LoginPage> {
                                   if (_listToggleSelected[0]) {
                                     if (!isServerNameTaken) {
                                       //Successful CREATE connection!
-                                      Scaffold.of(context).showSnackBar(
-                                          makeSnackBar(
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(makeGlobalSnackBar(
                                               'Successful connection!'));
                                       //Generate the server data
                                       _databaseReference
@@ -238,7 +239,8 @@ class _LoginPageState extends State<LoginPage> {
                                         }
                                       });
                                       //Clean up expired server data
-                                      removeExpiredServers(_databaseReference, mapServerData);
+                                      removeExpiredServers(
+                                          _databaseReference, mapServerData);
                                       //Generate the lobby data and enter the lobby
                                       _databaseReference
                                           .child(datas.strLobbyData)
@@ -249,8 +251,9 @@ class _LoginPageState extends State<LoginPage> {
                                           context, '/lobby-page',
                                           arguments: [strServerName]);
                                     } else {
-                                      Scaffold.of(context).showSnackBar(
-                                          makeSnackBar('Server name taken...'));
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(makeGlobalSnackBar(
+                                              'Server name taken...'));
                                     }
                                   } else if (_listToggleSelected[1]) {
                                     if (isServerNameTaken) {
@@ -259,10 +262,20 @@ class _LoginPageState extends State<LoginPage> {
                                                       [datas.strKey1Pass]
                                                   .toString() ==
                                               _listController[1].text;
-                                      if (isPassCorrect) {
+                                      bool isServerNotFull =
+                                          mapServerData[strServerName]
+                                                      [datas.strKey1ActiveUsers]
+                                                  .length <
+                                              datas.nServerMaxPlayers;
+                                      print(mapServerData[strServerName]
+                                          [datas.strKey1ActiveUsers]);
+                                      print(mapServerData[strServerName]
+                                              [datas.strKey1ActiveUsers]
+                                          .length);
+                                      if (isPassCorrect && isServerNotFull) {
                                         //Successful JOIN connection!
-                                        Scaffold.of(context).showSnackBar(
-                                            makeSnackBar(
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(makeGlobalSnackBar(
                                                 'Successful connection!'));
                                         _databaseReference
                                             .child(datas.strServerData)
@@ -288,19 +301,25 @@ class _LoginPageState extends State<LoginPage> {
                                         Navigator.pushNamed(
                                             context, '/lobby-page',
                                             arguments: [strServerName]);
-                                      } else {
-                                        Scaffold.of(context).showSnackBar(
-                                            makeSnackBar(
+                                      } else if (!isPassCorrect) {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(makeGlobalSnackBar(
                                                 'Incorrect password...'));
+                                      } else if (!isServerNotFull) {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(makeGlobalSnackBar(
+                                                'Server is full...'));
                                       }
                                     } else {
-                                      Scaffold.of(context).showSnackBar(
-                                          makeSnackBar('Server not found...'));
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(makeGlobalSnackBar(
+                                              'Server not found...'));
                                     }
                                   }
                                 } else {
-                                  Scaffold.of(context).showSnackBar(
-                                      makeSnackBar('Empty inputs present...'));
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                      makeGlobalSnackBar(
+                                          'Empty inputs present...'));
                                 }
                               },
                             ),
@@ -319,20 +338,6 @@ class _LoginPageState extends State<LoginPage> {
   }
 }
 
-SnackBar makeSnackBar(String strMessage) {
-  const int nDuration = 1;
-  return SnackBar(
-    backgroundColor: Colors.red,
-    content: Text(
-      strMessage,
-      style: LoginPage.styleHead,
-    ),
-    duration: Duration(
-      seconds: nDuration,
-    ),
-  );
-}
-
 Center makeProgressIndicator(BuildContext context) {
   const double fractionSize = 0.2;
   double sizeContainer = math.min(MediaQuery.of(context).size.width,
@@ -347,7 +352,8 @@ Center makeProgressIndicator(BuildContext context) {
   );
 }
 
-void removeExpiredServers(DatabaseReference reference, Map<dynamic, dynamic> mapServerData) {
+void removeExpiredServers(
+    DatabaseReference reference, Map<dynamic, dynamic> mapServerData) {
   int nNow = DateTime.now().millisecondsSinceEpoch;
   if (mapServerData != null && mapServerData.isNotEmpty) {
     mapServerData.forEach((key, value) {

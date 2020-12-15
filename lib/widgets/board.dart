@@ -119,6 +119,12 @@ class BoardPainter extends CustomPainter {
     Paint paintBoxTargeted = Paint();
     paintBoxTargeted.color = listBoardColor[6];
 
+    Paint paintBoxTraced = Paint();
+    paintBoxTraced.color = listBoardColor[7];
+
+    //###
+    //Will need to implement trace tagging, will obv need to tie back to logic
+
     Paint paintBoxSelf = Paint();
     paintBoxSelf.color =
         Color.fromARGB(75, colorSelf.red, colorSelf.green, colorSelf.blue);
@@ -138,6 +144,7 @@ class BoardPainter extends CustomPainter {
       paintBoxTargeted,
       paintBoxSelf,
       paintBoxRival,
+      paintBoxTraced,
     ];
     listPaint.forEach((element) {
       element.style = PaintingStyle.fill;
