@@ -18,6 +18,9 @@ import 'package:jps_chess/widgets/board.dart';
 import 'package:jps_chess/widgets/disconnect_overlay.dart';
 import 'package:jps_chess/widgets/game_over_overlay.dart';
 import 'package:jps_chess/functions/game_over_functions.dart';
+import 'package:jps_chess/widgets/special_ability_sector.dart';
+import 'package:jps_chess/widgets/piece_ability_sector.dart';
+import 'package:jps_chess/functions/sector_functions.dart';
 
 int nDiv = 8;
 int rMax = nDiv - 1;
@@ -298,188 +301,30 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
   //endregion Draw functions
 
   //region Piece Ability sector
-
-  Container makePieceAbilitySection(BuildContext context, String strPieceName) {
-    const List<int> listFlexRow = [3, 5];
-    const List<int> listFlexColumn1 = [1, 4];
-    const TextStyle styleSub1 = TextStyle(
-        color: Colors.white, fontWeight: FontWeight.normal, fontSize: 24);
-    const TextStyle styleSub2 = TextStyle(
-        color: Colors.black, fontWeight: FontWeight.normal, fontSize: 20);
-    const Color colorSingleUse = Colors.amber;
-    const Color colorContinuous = Colors.grey;
-    const Color colorActive = Colors.red;
-
-    if (strPieceName != null) {
-      return Container(
-        child: Row(
-          children: [
-            Expanded(
-              flex: listFlexRow[0],
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  Expanded(
-                    flex: listFlexColumn1[1],
-                    child: ClipOval(
-                      child: Image(
-                        image: AssetImage(
-                          'assets/$strPieceName.png',
-                        ),
-                      ),
-                    ),
-                  ),
-                  Flexible(
-                    flex: listFlexColumn1[0],
-                    child: Text(
-                      pieces.mapName[strPieceName],
-                      style: styleSub1,
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              flex: listFlexRow[1],
-              child: ListView.builder(
-                  itemCount: pieces.mapAbilityName[strPieceName].length,
-                  itemBuilder: (context, index) {
-                    bool isPieceAbilityActive =
-                        _mapPieceAbilityActive.isNotEmpty;
-                    bool isSpecificPieceAbilityActive = isPieceAbilityActive &&
-                        strPieceName == _mapPieceAbilityActive.keys.first &&
-                        index == _mapPieceAbilityActive.values.first;
-                    bool isAbilitySingleUse =
-                        pieces.mapAbilitySingleUse[strPieceName][index];
-                    return Card(
-                      color: isAbilitySingleUse
-                          ? (isSpecificPieceAbilityActive
-                              ? colorActive
-                              : colorSingleUse)
-                          : colorContinuous,
-                      child: FlatButton(
-                        padding: EdgeInsets.zero,
-                        child: ListTile(
-                          title: Text(
-                            pieces.mapAbilityName[strPieceName][index],
-                            style: styleSub2,
-                            textAlign: TextAlign.center,
-                          ),
-                          trailing: Icon(
-                            isAbilitySingleUse
-                                ? (isSpecificPieceAbilityActive
-                                    ? pieces.iconPieceAbilityCancel
-                                    : pieces.iconPieceAbilitySingleUse)
-                                : pieces.iconPieceAbilityContinuous,
-                            color: Theme.of(context).scaffoldBackgroundColor,
-                          ),
-                        ),
-                        onPressed: () {
-                          if (isAbilitySingleUse && !isPieceAbilityActive) {
-                            //Invalid usable management - Else proceed with ability box delineation
-                            bool isInvalidUsage =
-                                makeInvalidPieceAbilityMessage(context, index);
-                            if (!isInvalidUsage) {
-                              setState(() {
-                                _mapPieceAbilityActive = {
-                                  strPieceName: index,
-                                };
-                                _listTupleDPieceAbility =
-                                    mapPieceAbilityFunction[_strPieceSelected](
-                                        index, _mapSelf, _mapRival, _listTap);
-                              });
-                            }
-                          } else if (isPieceAbilityActive &&
-                              isSpecificPieceAbilityActive) {
-                            setState(() {
-                              resetPieceAbility();
-                            });
-                          }
-                        },
-                      ),
-                    );
-                  }),
-            ),
-          ],
-        ),
-      );
-    } else {
-      return Container();
+  void pieceAbilityOnPressed(
+      String strPieceName,
+      int index,
+      bool isAbilitySingleUse,
+      bool isPieceAbilityActive,
+      bool isSpecificPieceAbilityActive) {
+    if (isAbilitySingleUse && !isPieceAbilityActive) {
+      //Invalid usable management - Else proceed with ability box delineation
+      bool isInvalidUsage = makeInvalidPieceAbilityMessage(
+          context, strPieceName, index, _mapSelf, _listTap);
+      if (!isInvalidUsage) {
+        setState(() {
+          _mapPieceAbilityActive = {
+            strPieceName: index,
+          };
+          _listTupleDPieceAbility = mapPieceAbilityFunction[_strPieceSelected](
+              index, _mapSelf, _mapRival, _listTap);
+        });
+      }
+    } else if (isPieceAbilityActive && isSpecificPieceAbilityActive) {
+      setState(() {
+        resetPieceAbility();
+      });
     }
-  }
-
-  bool makeInvalidPieceAbilityMessage(BuildContext context, int index) {
-    const String strQueenKingError = 'Need a king present...';
-    const String strBishopLaunchError = 'Needs to be at launch edge!';
-    const String strKnightRiderError = 'Needs a pawn rider behind!';
-    const String strPawnEdgeError = 'Needs to be at opponent edge!';
-    switch (_strPieceSelected) {
-      case 'queen':
-        if (index ==
-                pieces.mapAbilityName[_strPieceSelected]
-                    .indexOf('Summon big papi') &&
-            _mapSelf['king'].isEmpty) {
-          showInvalidSnackBar(context, strQueenKingError);
-          return true;
-        } else {
-          return false;
-        }
-        break;
-      case 'bishop':
-        if (index ==
-                pieces.mapAbilityName[_strPieceSelected]
-                    .indexOf('Lunar laser-guided ballistic missile') &&
-            !(_listTap[0] == 0 || _listTap[0] == rMax)) {
-          showInvalidSnackBar(context, strBishopLaunchError);
-          return true;
-        } else {
-          return false;
-        }
-        break;
-      case 'knight':
-        if (index ==
-                pieces.mapAbilityName[_strPieceSelected]
-                    .indexOf('Big-ass-horse') &&
-            !(checkInBounds([_listTap[0], _listTap[1] - 1]) &&
-                getPieceName(_mapSelf, [_listTap[0], _listTap[1] - 1]) ==
-                    'pawn')) {
-          showInvalidSnackBar(context, strKnightRiderError);
-          return true;
-        } else {
-          return false;
-        }
-        break;
-      case 'pawn':
-        if (index ==
-                pieces.mapAbilityName[_strPieceSelected]
-                    .indexOf('I gotchu homie') &&
-            !(_listTap[1] == rMax)) {
-          showInvalidSnackBar(context, strPawnEdgeError);
-          return true;
-        } else {
-          return false;
-        }
-        break;
-      default:
-        return false;
-        break;
-    }
-  }
-
-  void showInvalidSnackBar(BuildContext context, String strMessage) {
-    const TextStyle styleMessage = TextStyle(
-        color: Colors.white, fontWeight: FontWeight.normal, fontSize: 24);
-    // ignore: deprecated_member_use
-    Scaffold.of(context).showSnackBar(SnackBar(
-      content: Text(
-        strMessage,
-        style: styleMessage,
-        textAlign: TextAlign.center,
-      ),
-      duration: Duration(seconds: 1, milliseconds: 500),
-      backgroundColor: Colors.redAccent,
-    ));
   }
 
   //endregion Piece Ability sector
@@ -612,229 +457,125 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
   //endregion Piece Ability functions
 
   //region Special Ability sector
-  Container makeSpecialAbilitySection(BuildContext context) {
-    const TextStyle styleHead1 = TextStyle(
-        color: Colors.white, fontWeight: FontWeight.bold, fontSize: 30);
-    const TextStyle styleHead2 = TextStyle(
-        color: Colors.black, fontWeight: FontWeight.bold, fontSize: 30);
-    const List<int> listSpecialFlex = [5, 1];
-    const double fractionWidthButton = 0.8;
-    const Color colorSingleUseAvailable = Colors.amber;
-    const Color colorSingleUseActive = Colors.red;
-    const Color colorSingleUseNotAvailable = Colors.grey;
-    const Color colorContinuous = colorSingleUseActive;
-
-    int indexPlayer = _indexPlayerProper;
-    String strSpecialAbilityName = _listSpecialAbilityNameProper[indexPlayer];
-    bool isSpecialAbilitySingleUse =
-        _listTimesSpecialAbilityMaxProper[indexPlayer] != 0;
-    if (!_isSpecialAbilityActiveProper && !isSpecialAbilitySingleUse) {
-      _isSpecialAbilityActiveProper = true;
-    }
-    bool isSpecialAbilityActive = _isSpecialAbilityActiveProper;
-    bool isSpecialAbilityAvailable = _isSpecialAbilityAvailableProper;
-    bool canSpecialAbilityReset =
-        specials.mapSpecialAttributes[strSpecialAbilityName][2] == 1;
-
-    Color colorDisplay;
-    String strDisplay;
-    IconData iconDisplay;
-    if (isSpecialAbilitySingleUse) {
-      if (isSpecialAbilityActive) {
-        colorDisplay = colorSingleUseActive;
-        strDisplay = canSpecialAbilityReset ? 'Reset' : 'End';
-        iconDisplay = Icons.star;
-      } else if (isSpecialAbilityAvailable) {
-        colorDisplay = colorSingleUseAvailable;
-        strDisplay = 'Activate';
-        iconDisplay = specials.iconSingleUse;
-      } else {
-        colorDisplay = colorSingleUseNotAvailable;
-        strDisplay = 'Not Available';
-        iconDisplay = Icons.cancel_outlined;
+  Future<void> specialAbilityOnPressed(
+      String strSpecialAbilityName,
+      bool isSpecialAbilitySingleUse,
+      bool isSpecialAbilityAvailable,
+      bool isSpecialAbilityActive,
+      bool canSpecialAbilityReset) async {
+    if (isSpecialAbilitySingleUse && isSpecialAbilityAvailable) {
+      resetSelection();
+      switch (strSpecialAbilityName) {
+        case 'Invisible Hands':
+          int nThresholdPieces = 3;
+          int nPawnsPresent = _mapRival['pawn'].length;
+          int nNonPawnsPresent = _mapRival.values
+                  .map((e) => e.length)
+                  .reduce((value, element) => value + element) -
+              nPawnsPresent;
+          bool areAdequatePiecesPresent = (nPawnsPresent >= nThresholdPieces &&
+              nNonPawnsPresent >= nThresholdPieces);
+          if (areAdequatePiecesPresent && !isSpecialAbilityActive) {
+            _isSpecialAbilityActiveProper = true;
+            primeSpecialAbility(strSpecialAbilityName);
+          } else if (isSpecialAbilityActive) {
+            canSpecialAbilityReset
+                ? resetSpecialAbility()
+                : completeSpecialAbility(true, false, false);
+          } else if (!areAdequatePiecesPresent) {
+            showInvalidSnackBar(context, 'Inadequate opponent pieces...');
+          }
+          break;
+        case 'Necromancer':
+          bool areAllGravesEmpty =
+              !(_mapGraveSelf.values.any((element) => element > 0) ||
+                  _mapGraveRival.values.any((element) => element > 0));
+          if (!areAllGravesEmpty && !isSpecialAbilityActive) {
+            _isSpecialAbilityActiveProper = true;
+            primeSpecialAbility(strSpecialAbilityName);
+          } else if (isSpecialAbilityActive) {
+            canSpecialAbilityReset
+                ? resetSpecialAbility()
+                : completeSpecialAbility(false, false, false);
+          } else if (areAllGravesEmpty) {
+            showInvalidSnackBar(context, 'Graves are empty...');
+          }
+          break;
+        case 'Puppet Master':
+          if (_mapSelf['pawn'].isNotEmpty && !isSpecialAbilityActive) {
+            int indexConfirmation = await showDialog(
+                context: (context),
+                builder: (context) {
+                  return makeSpecialAbilityDialog(
+                      context, ['Confirm use', 'Do not use']);
+                });
+            if (indexConfirmation == 0) {
+              addCannotCheckmateStatus(mapStatusTimerAdd, _mapStatusSelf);
+              _isSpecialAbilityActiveProper = true;
+              primeSpecialAbility(strSpecialAbilityName);
+            }
+          } else if (isSpecialAbilityActive) {
+            canSpecialAbilityReset
+                ? resetSpecialAbility()
+                : completeSpecialAbility(true, true, true);
+          } else if (_mapSelf['pawn'].isEmpty) {
+            showInvalidSnackBar(context, 'No pawns present...');
+          }
+          break;
+        case 'Sniper from Heaven':
+          bool isRivalInSniperZone = false;
+          _mapRival.values.forEach((eR) {
+            eR.forEach((eR2) {
+              isRivalInSniperZone = (isRivalInSniperZone ||
+                  _mapStatusSelf['mySpecial']
+                      .any((element) => fnd.listEquals(element, eR2)));
+            });
+          });
+          if (isRivalInSniperZone && !isSpecialAbilityActive) {
+            _isSpecialAbilityActiveProper = true;
+            primeSpecialAbility(strSpecialAbilityName);
+          } else if (isSpecialAbilityActive) {
+            canSpecialAbilityReset
+                ? resetSpecialAbility()
+                : completeSpecialAbility(false, false, false);
+          } else if (!isRivalInSniperZone) {
+            showInvalidSnackBar(context, 'No enemy in zone...');
+          }
+          break;
+        case 'Time Wizard':
+          int minPlayerTurns = 2;
+          bool isStartOfGame = _nTurn < (2 * minPlayerTurns);
+          if (!isStartOfGame && !isSpecialAbilityActive) {
+            setState(() {
+              _isSpecialAbilityActiveProper = true;
+              primeSpecialAbility(strSpecialAbilityName);
+            });
+          } else if (isSpecialAbilityActive) {
+            canSpecialAbilityReset
+                ? resetSpecialAbility()
+                : completeSpecialAbility(false, false, false);
+          } else if (isStartOfGame) {
+            String strMessageTooEarly = 'Chill your ass...';
+            showInvalidSnackBar(context, strMessageTooEarly);
+          }
+          break;
+      }
+    } else if (isSpecialAbilitySingleUse && !isSpecialAbilityAvailable) {
+      int nMax = _listTimesSpecialAbilityMaxProper[_indexPlayerProper];
+      int nUses = _nTimesSpecialAbilityUsed;
+      if (nMax < 2 || nUses >= nMax) {
+        showInvalidSnackBar(context, 'Ability already used!');
+      } else if (nUses < nMax) {
+        showInvalidSnackBar(context, 'Ability cooling down!');
       }
     } else {
-      colorDisplay = colorContinuous;
-      strDisplay = 'Active';
-      iconDisplay = specials.iconContinuous;
+      if (!(strSpecialAbilityName == 'Mind Control Tower' &&
+          _mapStatusSelf['mySpecial'].isEmpty)) {
+        showInvalidSnackBar(context, 'Ability continuously active!');
+      } else {
+        showInvalidSnackBar(context, 'Control chain broken...');
+      }
     }
-
-    return Container(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              Flexible(
-                flex: listSpecialFlex[0],
-                child: Text(
-                  strSpecialAbilityName,
-                  style: styleHead1,
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              Expanded(
-                flex: listSpecialFlex[1],
-                child: Icon(
-                  specials.mapSpecialSubtitleIcon[strSpecialAbilityName][1],
-                  size: styleHead1.fontSize,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
-          Builder(builder: (context) {
-            return FractionallySizedBox(
-              widthFactor: fractionWidthButton,
-              child: Card(
-                color: colorDisplay,
-                child: FlatButton(
-                  padding: EdgeInsets.zero,
-                  child: ListTile(
-                    title: Text(
-                      strDisplay,
-                      style: styleHead2,
-                      textAlign: TextAlign.center,
-                    ),
-                    trailing: Icon(
-                      iconDisplay,
-                      color: Theme.of(context).scaffoldBackgroundColor,
-                      size: styleHead2.fontSize,
-                    ),
-                  ),
-                  onPressed: () async {
-                    if (isSpecialAbilitySingleUse &&
-                        isSpecialAbilityAvailable) {
-                      resetSelection();
-                      switch (strSpecialAbilityName) {
-                        case 'Invisible Hands':
-                          int nThresholdPieces = 3;
-                          int nPawnsPresent = _mapRival['pawn'].length;
-                          int nNonPawnsPresent = _mapRival.values
-                                  .map((e) => e.length)
-                                  .reduce((value, element) => value + element) -
-                              nPawnsPresent;
-                          bool areAdequatePiecesPresent =
-                              (nPawnsPresent >= nThresholdPieces &&
-                                  nNonPawnsPresent >= nThresholdPieces);
-                          if (areAdequatePiecesPresent &&
-                              !isSpecialAbilityActive) {
-                            _isSpecialAbilityActiveProper = true;
-                            primeSpecialAbility(strSpecialAbilityName);
-                          } else if (isSpecialAbilityActive) {
-                            canSpecialAbilityReset
-                                ? resetSpecialAbility()
-                                : completeSpecialAbility(true, false, false);
-                          } else if (!areAdequatePiecesPresent) {
-                            showInvalidSnackBar(
-                                context, 'Inadequate opponent pieces...');
-                          }
-                          break;
-                        case 'Necromancer':
-                          bool areAllGravesEmpty = !(_mapGraveSelf.values
-                                  .any((element) => element > 0) ||
-                              _mapGraveRival.values
-                                  .any((element) => element > 0));
-                          if (!areAllGravesEmpty && !isSpecialAbilityActive) {
-                            _isSpecialAbilityActiveProper = true;
-                            primeSpecialAbility(strSpecialAbilityName);
-                          } else if (isSpecialAbilityActive) {
-                            canSpecialAbilityReset
-                                ? resetSpecialAbility()
-                                : completeSpecialAbility(false, false, false);
-                          } else if (areAllGravesEmpty) {
-                            showInvalidSnackBar(context, 'Graves are empty...');
-                          }
-                          break;
-                        case 'Puppet Master':
-                          if (_mapSelf['pawn'].isNotEmpty &&
-                              !isSpecialAbilityActive) {
-                            int indexConfirmation = await showDialog(
-                                context: (context),
-                                builder: (context) {
-                                  return makeSpecialAbilityDialog(
-                                      context, ['Confirm use', 'Do not use']);
-                                });
-                            if (indexConfirmation == 0) {
-                              addCannotCheckmateStatus(
-                                  mapStatusTimerAdd, _mapStatusSelf);
-                              _isSpecialAbilityActiveProper = true;
-                              primeSpecialAbility(strSpecialAbilityName);
-                            }
-                          } else if (isSpecialAbilityActive) {
-                            canSpecialAbilityReset
-                                ? resetSpecialAbility()
-                                : completeSpecialAbility(true, true, true);
-                          } else if (_mapSelf['pawn'].isEmpty) {
-                            showInvalidSnackBar(context, 'No pawns present...');
-                          }
-                          break;
-                        case 'Sniper from Heaven':
-                          bool isRivalInSniperZone = false;
-                          _mapRival.values.forEach((eR) {
-                            eR.forEach((eR2) {
-                              isRivalInSniperZone = (isRivalInSniperZone ||
-                                  _mapStatusSelf['mySpecial'].any((element) =>
-                                      fnd.listEquals(element, eR2)));
-                            });
-                          });
-                          if (isRivalInSniperZone && !isSpecialAbilityActive) {
-                            _isSpecialAbilityActiveProper = true;
-                            primeSpecialAbility(strSpecialAbilityName);
-                          } else if (isSpecialAbilityActive) {
-                            canSpecialAbilityReset
-                                ? resetSpecialAbility()
-                                : completeSpecialAbility(false, false, false);
-                          } else if (!isRivalInSniperZone) {
-                            showInvalidSnackBar(context, 'No enemy in zone...');
-                          }
-                          break;
-                        case 'Time Wizard':
-                          int minPlayerTurns = 2;
-                          bool isStartOfGame = _nTurn < (2 * minPlayerTurns);
-                          if (!isStartOfGame && !isSpecialAbilityActive) {
-                            setState(() {
-                              _isSpecialAbilityActiveProper = true;
-                              primeSpecialAbility(strSpecialAbilityName);
-                            });
-                          } else if (isSpecialAbilityActive) {
-                            canSpecialAbilityReset
-                                ? resetSpecialAbility()
-                                : completeSpecialAbility(false, false, false);
-                          } else if (isStartOfGame) {
-                            String strMessageTooEarly = 'Chill your ass...';
-                            showInvalidSnackBar(context, strMessageTooEarly);
-                          }
-                          break;
-                      }
-                    } else if (isSpecialAbilitySingleUse &&
-                        !isSpecialAbilityAvailable) {
-                      int nMax =
-                          _listTimesSpecialAbilityMaxProper[_indexPlayerProper];
-                      int nUses = _nTimesSpecialAbilityUsed;
-                      if (nMax < 2 || nUses >= nMax) {
-                        showInvalidSnackBar(context, 'Ability already used!');
-                      } else if (nUses < nMax) {
-                        showInvalidSnackBar(context, 'Ability cooling down!');
-                      }
-                    } else {
-                      if (!(strSpecialAbilityName == 'Mind Control Tower' &&
-                          _mapStatusSelf['mySpecial'].isEmpty)) {
-                        showInvalidSnackBar(
-                            context, 'Ability continuously active!');
-                      } else {
-                        showInvalidSnackBar(context, 'Control chain broken...');
-                      }
-                    }
-                  },
-                ),
-              ),
-            );
-          }),
-        ],
-      ),
-    );
   }
 
   //endregion Special Ability sector
@@ -1808,6 +1549,7 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
     uploadInitialSelfGameData();
     initTimesSpecialAbilityMax();
     initPreGame();
+    initSpecialAbility();
     _subscription = _databaseReference
         .child(datas.strGameData)
         .child(widget.strServerName)
@@ -1904,6 +1646,13 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
     });
   }
 
+  void initSpecialAbility() {
+    if (!_isSpecialAbilityActiveProper &&
+        !(_listTimesSpecialAbilityMaxProper[_indexPlayerProper] != 0)) {
+      _isSpecialAbilityActiveProper = true;
+    }
+  }
+
   void updateProperGameData(Event event) {
     switch (event.snapshot.key) {
       case datas.strKey1VarGlobal:
@@ -1918,8 +1667,8 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
                               [datas.strKey3DeclarationMessage]
                     }
                   : _mapDeclaration;
-          _listGameOverByKing =
-              List<int>.from(event.snapshot.value[datas.strKey2listGameOverByKing]);
+          _listGameOverByKing = List<int>.from(
+              event.snapshot.value[datas.strKey2listGameOverByKing]);
         });
         _nTurn = event.snapshot.value[datas.strKey2NTurn];
         _indexActivePlayer =
@@ -2134,8 +1883,34 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
               !isPreGame
                   ? Expanded(
                       child: listToggleAbilityProper[0]
-                          ? makeSpecialAbilitySection(context)
-                          : makePieceAbilitySection(context, _strPieceSelected),
+                          ? SpecialAbilitySector(
+                              indexPlayer: _indexPlayerProper,
+                              strSpecialAbilityName:
+                                  _listSpecialAbilityNameProper[
+                                      _indexPlayerProper],
+                              strRivalSpecialAbilityName:
+                                  _listSpecialAbilityNameProper[
+                                      1 - _indexPlayerProper],
+                              isSpecialAbilitySingleUse:
+                                  _listTimesSpecialAbilityMaxProper[
+                                          _indexPlayerProper] !=
+                                      0,
+                              isSpecialAbilityActive:
+                                  _isSpecialAbilityActiveProper,
+                              isSpecialAbilityAvailable:
+                                  _isSpecialAbilityAvailableProper,
+                              canSpecialAbilityReset:
+                                  specials.mapSpecialAttributes[
+                                          _listSpecialAbilityNameProper[
+                                              _indexPlayerProper]][2] ==
+                                      1,
+                              specialAbilityOnPressed: specialAbilityOnPressed,
+                            )
+                          : PieceAbilitySector(
+                              strPieceName: _strPieceSelected,
+                              mapPieceAbilityActive: _mapPieceAbilityActive,
+                              pieceAbilityOnPressed: pieceAbilityOnPressed,
+                            ),
                     )
                   : Container(),
             ],
@@ -2164,8 +1939,9 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
     const String strMessageLose = 'Game over\n\nYou lose...';
     const String strMessageWin = 'Game over\n\nYou win!!!';
     bool isWinner = (_listGameOverByKing.first == 2 &&
-        _indexActivePlayer == 1 - _indexPlayerProper) || (_listGameOverByKing.first == 1 &&
-        _indexActivePlayer == _indexPlayerProper);
+            _indexActivePlayer == 1 - _indexPlayerProper) ||
+        (_listGameOverByKing.first == 1 &&
+            _indexActivePlayer == _indexPlayerProper);
     String strMessageDisplayed = isWinner ? strMessageWin : strMessageLose;
     return GameOverOverlay(
       strMessage: strMessageDisplayed,
@@ -2229,7 +2005,9 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
             DisconnectionOverlay(
               nPlayers: _nPlayers,
             ),
-            _listGameOverByKing.first != 0 ? makeGameOverOverlay() : Container(),
+            _listGameOverByKing.first != 0
+                ? makeGameOverOverlay()
+                : Container(),
           ],
         );
       } else {
@@ -2242,7 +2020,9 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
             DisconnectionOverlay(
               nPlayers: _nPlayers,
             ),
-            _listGameOverByKing.first != 0 ? makeGameOverOverlay() : Container(),
+            _listGameOverByKing.first != 0
+                ? makeGameOverOverlay()
+                : Container(),
           ],
         );
       }

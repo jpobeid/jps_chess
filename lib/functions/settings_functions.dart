@@ -2,19 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:jps_chess/data/settings_data.dart' as settings;
 
+void setMapDefaults(Map<String, List<int>> mapPreferences) {
+  mapPreferences = {
+    'Player 1 Color': [0, 0],
+    'Player 2 Color': [1, 0],
+    'Selection Color': [8, 0],
+    'Action Color': [5, 2],
+    'Fixed Color': [10, 1],
+    'Forced Color': [12, 2],
+    'Targeted Color': [4, 1],
+    'Traced Color': [14, 2],
+  };
+}
+
 Future<List<Color>> loadBoardColors() async {
   final SharedPreferences prefs = await SharedPreferences.getInstance();
   Map<String, List<int>> mapPreferences;
   if (prefs.getKeys().isEmpty) {
-    mapPreferences = {
-      'Player 1 Color': [0, 0],
-      'Player 2 Color': [1, 0],
-      'Selection Color': [8, 0],
-      'Action Color': [5, 2],
-      'Fixed Color': [10, 1],
-      'Forced Color': [12, 2],
-      'Targeted Color': [4, 1],
-    };
+    setMapDefaults(mapPreferences);
   } else {
     mapPreferences = {
       'Player 1 Color': [
@@ -45,7 +50,17 @@ Future<List<Color>> loadBoardColors() async {
         prefs.getInt('Targeted Color-Color'),
         prefs.getInt('Targeted Color-Alpha')
       ],
+      'Traced Color': [
+        prefs.getInt('Traced Color-Color'),
+        prefs.getInt('Traced Color-Alpha')
+      ],
     };
   }
-  return mapPreferences.values.map((e) => Color.fromARGB(settings.listAlpha[e.last], settings.listColor[e.first].red, settings.listColor[e.first].green, settings.listColor[e.first].blue)).toList();
+  return mapPreferences.values
+      .map((e) => Color.fromARGB(
+          settings.listAlpha[e.last],
+          settings.listColor[e.first].red,
+          settings.listColor[e.first].green,
+          settings.listColor[e.first].blue))
+      .toList();
 }

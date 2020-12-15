@@ -20,19 +20,24 @@ class _SettingsPageState extends State<SettingsPage> {
     super.initState();
   }
 
+  void setMapDefaults() {
+    _mapPreferences = {
+      'Player 1 Color': [0, 0],
+      'Player 2 Color': [1, 0],
+      'Selection Color': [8, 0],
+      'Action Color': [5, 2],
+      'Fixed Color': [10, 1],
+      'Forced Color': [12, 2],
+      'Targeted Color': [4, 1],
+      'Traced Color': [14, 2],
+    };
+  }
+
   Future<void> loadPreferences() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
       if (prefs.getKeys().isEmpty) {
-        _mapPreferences = {
-          'Player 1 Color': [0, 0],
-          'Player 2 Color': [1, 0],
-          'Selection Color': [8, 0],
-          'Action Color': [5, 2],
-          'Fixed Color': [10, 1],
-          'Forced Color': [12, 2],
-          'Targeted Color': [4, 1],
-        };
+        setMapDefaults();
       } else {
         _mapPreferences = {
           'Player 1 Color': [
@@ -62,6 +67,10 @@ class _SettingsPageState extends State<SettingsPage> {
           'Targeted Color': [
             prefs.getInt('Targeted Color-Color'),
             prefs.getInt('Targeted Color-Alpha')
+          ],
+          'Traced Color': [
+            prefs.getInt('Traced Color-Color'),
+            prefs.getInt('Traced Color-Alpha')
           ],
         };
       }
@@ -97,15 +106,7 @@ class _SettingsPageState extends State<SettingsPage> {
               FlatButton(
                 child: Text('Reset'),
                 onPressed: () async {
-                  _mapPreferences = {
-                    'Player 1 Color': [0, 0],
-                    'Player 2 Color': [1, 0],
-                    'Selection Color': [8, 0],
-                    'Action Color': [5, 2],
-                    'Fixed Color': [10, 1],
-                    'Forced Color': [12, 2],
-                    'Targeted Color': [4, 1],
-                  };
+                  setMapDefaults();
                   await savePreferences();
                   setState(() {});
                 },

@@ -43,6 +43,7 @@ const String strKey2MapStatus = 'mapStatus';
 //region Server Data
 const String strServerData = 'server_data';
 const String strServerPlaceholder = 'serv_0';
+const int nServerMaxPlayers = 2;
 
 //Level 1 keys
 const String strKey1Pass = 'pass';

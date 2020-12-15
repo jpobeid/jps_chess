@@ -1,12 +1,14 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:jps_chess/functions/connectivity_functions.dart';
+import 'package:jps_chess/functions/snack_bar_functions.dart';
 import 'package:rive/rive.dart';
 import 'package:flutter/services.dart';
 
 class TitlePage extends StatefulWidget {
   static const routeName = '/title-page';
 
-  static const Icon iconSettings = Icon(Icons.settings, color: Color.fromARGB(255, 220, 220, 220), size: 36);
+  static const Icon iconSettings =
+      Icon(Icons.settings, color: Color.fromARGB(255, 220, 220, 220), size: 36);
   static const TextStyle styleTitle =
       TextStyle(color: Colors.white, fontWeight: FontWeight.bold);
   static const double fractionWidthTitle = 0.8;
@@ -135,14 +137,22 @@ Container _makeModeButton(BuildContext context, double fractionHeightMode,
         style: styleMode,
         textAlign: TextAlign.center,
       ),
-      onPressed: () {
+      onPressed: () async {
         switch (index) {
           case 0:
-            Navigator.of(context)
-                .pushReplacementNamed('/special-select-offline', arguments: [false, 0]);
+            Navigator.of(context).pushReplacementNamed(
+                '/special-select-offline',
+                arguments: [false, 0]);
             break;
           case 1:
-            Navigator.of(context).pushReplacementNamed('/login-page');
+            bool isInternetConnected = await checkIsInternetConnected();
+            if (isInternetConnected) {
+              Navigator.of(context).pushReplacementNamed('/login-page');
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                makeGlobalSnackBar('No internet connection...'),
+              );
+            }
             break;
           default:
             break;
