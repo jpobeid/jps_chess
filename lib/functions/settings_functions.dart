@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:jps_chess/data/settings_data.dart' as settings;
 
-void setMapDefaults(Map<String, List<int>> mapPreferences) {
-  mapPreferences = {
+Map<String, List<int>> setMapDefaults() {
+  return {
     'Player 1 Color': [0, 0],
     'Player 2 Color': [1, 0],
     'Selection Color': [8, 0],
@@ -11,7 +11,7 @@ void setMapDefaults(Map<String, List<int>> mapPreferences) {
     'Fixed Color': [10, 1],
     'Forced Color': [12, 2],
     'Targeted Color': [4, 1],
-    'Traced Color': [14, 2],
+    'Traced Color': [9, 2],
   };
 }
 
@@ -19,7 +19,7 @@ Future<List<Color>> loadBoardColors() async {
   final SharedPreferences prefs = await SharedPreferences.getInstance();
   Map<String, List<int>> mapPreferences;
   if (prefs.getKeys().isEmpty) {
-    setMapDefaults(mapPreferences);
+    mapPreferences = setMapDefaults();
   } else {
     mapPreferences = {
       'Player 1 Color': [

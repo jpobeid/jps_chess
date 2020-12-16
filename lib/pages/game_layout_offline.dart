@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:jps_chess/functions/general_game_functions.dart';
 import 'package:jps_chess/widgets/board.dart';
 import 'package:jps_chess/data/player_data.dart' as players;
 import 'package:jps_chess/data/pieces_data.dart' as pieces;
@@ -128,19 +129,23 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
     'fixed': [],
     'forced': [],
     'targeted': [],
+    'traced': [],
     'cannotCheckmate': [],
     'timer': [],
     'mySpecial': [],
     'mySpecialLabel': [],
+    'mySpecialSecret': [],
   };
   Map<String, List<List<int>>> _mapStatusRival = {
     'fixed': [],
     'forced': [],
     'targeted': [],
+    'traced': [],
     'cannotCheckmate': [],
     'timer': [],
     'mySpecial': [],
     'mySpecialLabel': [],
+    'mySpecialSecret': [],
   };
   List<Color> _listBoardColors;
   List<int> _listGameOverByKing = [0, 0];
@@ -216,12 +221,13 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
   }
 
   void mapRemoveAdd(
-      Map<String, List<List<int>>> map,
-      Map<String, int> mapGrave,
-      List<bool> listIsRemoveAdd,
-      List<int> listCoordinateRemove,
-      String strPieceNameAdd,
-      List<int> listCoordinateAdd) {
+    Map<String, List<List<int>>> map,
+    Map<String, int> mapGrave,
+    List<bool> listIsRemoveAdd,
+    List<int> listCoordinateRemove,
+    String strPieceNameAdd,
+    List<int> listCoordinateAdd,
+  ) {
     if (listIsRemoveAdd[0]) {
       String strPieceNameRemove = getPieceName(map, listCoordinateRemove);
       List<List<int>> listSubRemove = map[strPieceNameRemove];
@@ -250,7 +256,8 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
       _mapStatusRival.keys.forEach((element) {
         if (_mapStatusRival[element].isNotEmpty &&
             (element == 'fixed' || element == 'forced')) {
-          mapStatusTimerRemove(_mapStatusRival, element, [listNewTap]);
+          _mapStatusRival =
+              mapStatusTimerRemove(_mapStatusRival, element, [listNewTap]);
         }
         //Break the rival Mind Control chain
         else if (widget.listSpecialAbilityName[1 - _indexActivePlayer] ==
@@ -294,44 +301,6 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
     }
   }
 
-  void mapStatusTimerAdd(Map<String, List<List<int>>> mapStatus,
-      String strStatus, List<List<int>> listListAdd, int nTurnsDuration) {
-    List<List<int>> listSub = mapStatus[strStatus];
-    List<List<int>> listSubTimer = mapStatus['timer'];
-    listListAdd.forEach((eD0) {
-      listSub.add(eD0);
-      listSubTimer.add([
-        eD0[0],
-        eD0[1],
-        mapStatus.keys.toList().indexOf(strStatus),
-        _nTurn + nTurnsDuration
-      ]);
-    });
-    mapStatus.addAll({strStatus: listSub});
-    mapStatus.addAll({'timer': listSubTimer});
-  }
-
-  void mapStatusTimerRemove(Map<String, List<List<int>>> mapStatus,
-      String strStatus, List<List<int>> listListRemove) {
-    List<List<int>> listSub = mapStatus[strStatus];
-    List<List<int>> listSubTimer = mapStatus['timer'];
-    listListRemove.forEach((eR) {
-      bool isPresent = (listSub.any((element) => fnd.listEquals(element, eR)));
-      if (isPresent) {
-        int index =
-            listSub.map((e) => fnd.listEquals(e, eR)).toList().indexOf(true);
-        listSub.removeAt(index);
-        int indexTimer = listSubTimer
-            .map((e) => fnd.listEquals([e[0], e[1]], eR))
-            .toList()
-            .indexOf(true);
-        listSubTimer.removeAt(indexTimer);
-      }
-    });
-    mapStatus.addAll({strStatus: listSub});
-    mapStatus.addAll({'timer': listSubTimer});
-  }
-
   //endregion Draw functions
 
   //region Piece Ability sector
@@ -371,6 +340,7 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
             pieces.mapAbilityName[_strPieceSelected].indexOf('Begone bitch')) {
           setState(() {
             attackIfRivalSpot(listNewTap);
+            markTracedBoxes(_listTap, listNewTap, true);
             endTurn();
           });
         }
@@ -384,6 +354,7 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
             setState(() {
               mapRemoveAdd(_mapSelf, _mapGraveSelf, [true, true],
                   listCoordinatesKing, 'king', listNewTap);
+              markTracedBoxes(listCoordinatesKing, listNewTap, false);
               endTurn();
             });
           }
@@ -396,10 +367,11 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
           int nDuration = 2;
           setState(() {
             //Fix rival piece
-            mapStatusTimerAdd(
-                _mapStatusRival, 'fixed', [listNewTap], nDuration);
+            _mapStatusRival = mapStatusTimerAdd(
+                _nTurn, _mapStatusRival, 'fixed', [listNewTap], nDuration);
             //Fix your own rook
-            mapStatusTimerAdd(
+            _mapStatusSelf = mapStatusTimerAdd(
+                _nTurn,
                 _mapStatusSelf,
                 'fixed',
                 [
@@ -411,6 +383,7 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
             pieces.mapAbilityName[_strPieceSelected].indexOf('Tower turrets')) {
           setState(() {
             attackIfRivalSpot(listNewTap);
+            markTracedBoxes(_listTap, listNewTap, true);
             endTurn();
           });
         }
@@ -432,10 +405,10 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
           int nDuration = 5;
           setState(() {
             //Target the cross area
-            mapStatusTimerAdd(
-                _mapStatusSelf, 'targeted', listListTarget, nDuration);
-            mapStatusTimerAdd(
-                _mapStatusRival, 'targeted', listListTarget, nDuration);
+            _mapStatusSelf = mapStatusTimerAdd(
+                _nTurn, _mapStatusSelf, 'targeted', listListTarget, nDuration);
+            _mapStatusRival = mapStatusTimerAdd(
+                _nTurn, _mapStatusRival, 'targeted', listListTarget, nDuration);
             //Destroy the missile piece
             mapRemoveAdd(
                 _mapSelf, _mapGraveSelf, [true, false], _listTap, '', []);
@@ -451,6 +424,7 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
             mapRemoveAdd(_mapSelf, _mapGraveSelf, [true, true], _listTap,
                 'knight', listNewTap);
             attackIfRivalSpot(listNewTap);
+            markTracedBoxes(_listTap, listNewTap, false);
             endTurn();
           });
         } else if (_mapPieceAbilityActive.values.first ==
@@ -466,6 +440,7 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
                 'pawn',
                 [listNewTap[0], listNewTap[1] - 1]);
             attackIfRivalSpot(listNewTap);
+            markTracedBoxes(_listTap, listNewTap, false);
             endTurn();
           });
         }
@@ -477,6 +452,7 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
           setState(() {
             mapRemoveAdd(_mapSelf, _mapGraveSelf, [true, true], _listTap,
                 'pawn', listNewTap);
+            markTracedBoxes(_listTap, listNewTap, false);
             endTurn();
           });
         }
@@ -542,7 +518,7 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
                       context, ['Confirm use', 'Do not use']);
                 });
             if (indexConfirmation == 0) {
-              addCannotCheckmateStatus(mapStatusTimerAdd, _mapStatusSelf);
+              _mapStatusSelf = addCannotCheckmateStatus(_nTurn, mapStatusTimerAdd, _mapStatusSelf);
               _listIsSpecialAbilityActive[_indexActivePlayer] = true;
               primeSpecialAbility(strSpecialAbilityName);
             }
@@ -709,8 +685,8 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
       case 'Puppet Master':
         int nDuration = 0;
         setState(() {
-          mapStatusTimerAdd(
-              _mapStatusSelf, 'forced', _mapSelf['pawn'], nDuration);
+          _mapStatusSelf = mapStatusTimerAdd(
+              _nTurn, _mapStatusSelf, 'forced', _mapSelf['pawn'], nDuration);
         });
         break;
       case 'Sniper from Heaven':
@@ -992,7 +968,8 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
                     [],
                     strPieceName,
                     listNewTap);
-                addCannotCheckmateStatus(mapStatusTimerAdd, _mapStatusSelf);
+                _mapStatusSelf = addCannotCheckmateStatus(_nTurn, mapStatusTimerAdd, _mapStatusSelf);
+                markTracedBoxes(listNewTap, listNewTap, true);
                 completeSpecialAbility(true, true, true);
               }
               break;
@@ -1016,7 +993,8 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
                     listStringGraveName[indexPieceRevive].split(' ')[1];
                 mapRemoveAdd(_mapSelf, _mapGraveSelf, [true, true], listNewTap,
                     strPieceName, listNewTap);
-                mapStatusTimerAdd(_mapStatusSelf, 'fixed', [listNewTap], 0);
+                _mapStatusSelf = mapStatusTimerAdd(
+                    _nTurn, _mapStatusSelf, 'fixed', [listNewTap], 0);
                 completeSpecialAbility(false, false, false);
               }
               break;
@@ -1052,9 +1030,11 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
                     listNewTap, '', []);
                 mapRemoveAdd(_mapSelf, _mapGraveSelf, [true, true], _listTap,
                     'pawn', listNewTap);
+                markTracedBoxes(_listTap, listNewTap, false);
               } else if (indexAttackType == 1) {
                 mapRemoveAdd(_mapRival, _mapGraveRival, [true, false],
                     listNewTap, '', []);
+                markTracedBoxes(_listTap, listNewTap, true);
               }
               endTurn();
             });
@@ -1231,13 +1211,15 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
               _strPieceSelected, [iTap, jTap]);
           attackIfRivalSpot([iTap, jTap]);
           if (areForcedZonesPresent) {
-            mapStatusTimerRemove(_mapStatusSelf, 'forced', [_listTap]);
+            _mapStatusSelf =
+                mapStatusTimerRemove(_mapStatusSelf, 'forced', [_listTap]);
           }
           if (toMoveSpecialTagWithPiece) {
             _mapStatusSelf['mySpecial']
                 .removeWhere((element) => fnd.listEquals(element, _listTap));
             _mapStatusSelf['mySpecial'].add([iTap, jTap]);
           }
+          markTracedBoxes(_listTap, [iTap, jTap], false);
           resetSelection();
           if (_mapStatusSelf['forced'].length == 0) {
             bool isSpecialAbilitySingleUse =
@@ -1251,7 +1233,7 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
                 !toRepeatTurn) {
               completeSpecialAbility(true, true, true);
             } else if (toRepeatTurn) {
-              addCannotCheckmateStatus(mapStatusTimerAdd, _mapStatusSelf);
+              _mapStatusSelf = addCannotCheckmateStatus(_nTurn, mapStatusTimerAdd, _mapStatusSelf);
               resetSelection();
               completeSpecialAbility(true, false, true);
             } else {
@@ -1265,6 +1247,13 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
     }
   }
 
+  void markTracedBoxes(List<int> listTap, List<int> listNewTap, bool isOldBoxOnly) {
+    _mapStatusSelf = mapStatusTimerAdd(_nTurn, _mapStatusSelf, 'traced', [[listTap[0], listTap[1]]], players.nDurationTraced);
+    if (!isOldBoxOnly) {
+      _mapStatusSelf = mapStatusTimerAdd(_nTurn, _mapStatusSelf, 'traced', [[listNewTap[0], listNewTap[1]]], players.nDurationTraced);
+    }
+  }
+
 //endregion Gesture functions
 
 //region Turn functions
@@ -1275,113 +1264,27 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
     if (!isSamePlayer) {
       _indexActivePlayer = _nTurn % 2;
       performFutureFunction();
-      performTurnTranspositions();
+      performTurnTranspositionsLocal();
     }
   }
 
-  void performTurnTranspositions() {
-    _mapStatusSelf = performStatusExpiration(_mapStatusSelf);
-    _mapStatusRival = performStatusExpiration(_mapStatusRival);
-    Map<String, List<List<int>>> mapTempSelf;
-    Map<String, List<List<int>>> mapTempRival;
-    mapTempSelf = _mapSelf;
-    mapTempRival = _mapRival;
-    _mapRival = transposeMap(mapTempSelf);
-    _mapSelf = transposeMap(mapTempRival);
-    mapTempSelf = _mapStatusSelf;
-    mapTempRival = _mapStatusRival;
-    _mapStatusRival = transposeMap(mapTempSelf);
-    _mapStatusSelf = transposeMap(mapTempRival);
-    Map<String, int> mapTempGraveSelf = _mapGraveSelf;
-    Map<String, int> mapTempGraveRival = _mapGraveRival;
-    _mapGraveRival = mapTempGraveSelf;
-    _mapGraveSelf = mapTempGraveRival;
-  }
-
-  Map<String, List<List<int>>> transposeMap(Map<String, List<List<int>>> map) {
-    if (_toTransposeBoard) {
-      //Transpose pieces
-      Map<String, List<List<int>>> mapTransposed = {};
-      map.keys.forEach((element) {
-        List<List<int>> listSub = map[element];
-        if (listSub.isNotEmpty && listSub.first.length == 2) {
-          listSub = listSub.map((e) => [rMax - e[0], rMax - e[1]]).toList();
-        } else if (listSub.isNotEmpty && listSub.first.length == 4) {
-          listSub = listSub
-              .map((e) => [rMax - e[0], rMax - e[1], e[2], e[3]])
-              .toList();
-        }
-        mapTransposed.addAll({element: listSub});
-      });
-      return mapTransposed;
-    } else {
-      return map;
-    }
-  }
-
-  Map<String, List<List<int>>> performStatusExpiration(
-      Map<String, List<List<int>>> mapStatus) {
-    Map<int, String> mapStatusNumber = {
-      0: 'fixed',
-      1: 'forced',
-      2: 'targeted',
-      3: 'cannotCheckmate',
-    };
-    List<List<int>> listListSubTimer;
-    int i;
-    List<int> listI;
-    //Perform expiration for Self
-    listListSubTimer = mapStatus['timer'];
-    i = 0;
-    listI = [];
-    if (listListSubTimer.isNotEmpty) {
-      listListSubTimer.forEach((element) {
-        if (element.last < _nTurn) {
-          listI.add(i);
-          List<List<int>> listListSub = mapStatus[mapStatusNumber[element[2]]];
-          int index = listListSub
-              .map((e) => fnd.listEquals(e, [element[0], element[1]]))
-              .toList()
-              .indexOf(true);
-          listListSub.removeAt(index);
-          mapStatus.addAll({mapStatusNumber[element[2]]: listListSub});
-          performStatusFunction(
-              mapStatusNumber[element[2]], [element[0], element[1]]);
-        }
-        i++;
-      });
-      int j = 0;
-      listI.forEach((element) {
-        listListSubTimer.removeAt(element - j);
-        j++;
-      });
-      mapStatus.addAll({'timer': listListSubTimer});
-    }
-    return mapStatus;
-  }
-
-  void performStatusFunction(String strStatus, List<int> listCoordinates) {
-    switch (strStatus) {
-      case 'fixed':
-        break;
-      case 'forced':
-        break;
-      case 'targeted':
-        if (checkOccupied(_mapSelf, listCoordinates) &&
-            getPieceName(_mapSelf, listCoordinates) != 'king') {
-          mapRemoveAdd(
-              _mapSelf, _mapGraveSelf, [true, false], listCoordinates, '', []);
-        } else if (checkOccupied(_mapRival, listCoordinates) &&
-            getPieceName(_mapRival, listCoordinates) != 'king') {
-          mapRemoveAdd(_mapRival, _mapGraveRival, [true, false],
-              listCoordinates, '', []);
-        }
-        break;
-      case 'cannotCheckmate':
-        break;
-      default:
-        break;
-    }
+  void performTurnTranspositionsLocal() {
+    List<Map> listMapTransposed = performTurnTranspositions(
+        _nTurn,
+        _indexActivePlayer,
+        _mapSelf,
+        _mapRival,
+        _mapStatusSelf,
+        _mapStatusRival,
+        _mapGraveSelf,
+        _mapGraveRival,
+        _toTransposeBoard);
+    _mapSelf = listMapTransposed[0];
+    _mapRival = listMapTransposed[1];
+    _mapStatusSelf = listMapTransposed[2];
+    _mapStatusRival = listMapTransposed[3];
+    _mapGraveSelf = listMapTransposed[4];
+    _mapGraveRival = listMapTransposed[5];
   }
 
   void performFutureFunction() {
@@ -1394,16 +1297,16 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
           switch (_mapFutureBuilderArgs[_nTurn][0]) {
             case 0:
               listTupleRestrict.addAll(_mapRival['pawn']);
-              mapStatusTimerAdd(
-                  _mapStatusRival, 'fixed', listTupleRestrict, nDuration);
+              _mapStatusRival = mapStatusTimerAdd(_nTurn, _mapStatusRival,
+                  'fixed', listTupleRestrict, nDuration);
               break;
             case 1:
               listTupleRestrict.addAll(_mapRival['queen']);
               listTupleRestrict.addAll(_mapRival['rook']);
               listTupleRestrict.addAll(_mapRival['bishop']);
               listTupleRestrict.addAll(_mapRival['knight']);
-              mapStatusTimerAdd(
-                  _mapStatusRival, 'fixed', listTupleRestrict, nDuration);
+              _mapStatusRival = mapStatusTimerAdd(_nTurn, _mapStatusRival,
+                  'fixed', listTupleRestrict, nDuration);
               break;
             case 2:
               resetSpecialAbility();
@@ -1473,7 +1376,7 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
         1) {
       _nTurn = -nPreGameSpecials;
       _indexActivePlayer = 1;
-      performTurnTranspositions();
+      performTurnTranspositionsLocal();
     } else {
       _nTurn = 0;
       _indexActivePlayer = _nTurn % 2;

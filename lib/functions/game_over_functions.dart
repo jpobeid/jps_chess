@@ -15,12 +15,13 @@ int checkGameOverByKing(
   }
 }
 
-void addCannotCheckmateStatus(Function mapStatusTimerAdd, mapStatus) {
+Map<String, List<List<int>>> addCannotCheckmateStatus(int nTurn, Function mapStatusTimerAdd, mapStatus) {
   const int nTurnsCannotCheckmate = 3;
   const List<List<int>> listListPlaceholder = [
     [-1, -1]
   ];
-  mapStatusTimerAdd(
+  mapStatus = mapStatusTimerAdd(nTurn,
       mapStatus, 'cannotCheckmate', listListPlaceholder, nTurnsCannotCheckmate);
+  return mapStatus;
 }
 

@@ -14,12 +14,6 @@ class _SettingsPageState extends State<SettingsPage> {
   // The list of ints is the index of the color and the respective index of alpha used
   Map<String, List<int>> _mapPreferences;
 
-  @override
-  void initState() {
-    loadPreferences();
-    super.initState();
-  }
-
   void setMapDefaults() {
     _mapPreferences = {
       'Player 1 Color': [0, 0],
@@ -29,8 +23,14 @@ class _SettingsPageState extends State<SettingsPage> {
       'Fixed Color': [10, 1],
       'Forced Color': [12, 2],
       'Targeted Color': [4, 1],
-      'Traced Color': [14, 2],
+      'Traced Color': [9, 2],
     };
+  }
+
+  @override
+  void initState() {
+    loadPreferences();
+    super.initState();
   }
 
   Future<void> loadPreferences() async {

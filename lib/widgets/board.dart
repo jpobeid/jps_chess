@@ -287,6 +287,8 @@ void drawTagStatus(
     tagPaint = listPaint[6];
   } else if (checkStatus(mapStatusSelf, mapStatusRival, 'targeted', i, jU)) {
     tagPaint = listPaint[7];
+  } else if (checkStatus(mapStatusRival, mapStatusRival, 'traced', i, jU)) {
+    tagPaint = listPaint[10];
   } else if (checkStatus(mapStatusSelf, mapStatusRival, 'mySpecial', i, jU)) {
     if (checkStatus(
             mapStatusSelf,

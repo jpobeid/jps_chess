@@ -90,9 +90,12 @@ const Map<String, List<List<int>>> mapStartStatus = {
   'fixed': [],
   'forced': [],
   'targeted': [],
+  'traced': [],
   'cannotCheckmate': [],
   'timer': [],
   'mySpecial': [],
   'mySpecialLabel': [],
   'mySpecialSecret': [],
 };
+
+const int nDurationTraced = 1;
