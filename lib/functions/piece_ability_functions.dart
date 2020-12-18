@@ -110,6 +110,48 @@ List<List<int>> getRookAbilityEligibleSpots(
         }
       }
     });
+  } else if (nAbility ==
+      pieces.mapAbilityName['rook'].indexOf("Stoner's castle")) {
+    List<int> tupleKing = mapSelf['king'].first;
+    int dBoxes = (i - tupleKing[0]).abs();
+    List<List<int>> listD0;
+    switch (i < tupleKing[0]) {
+      case true:
+        if (dBoxes == 3) {
+          listD0 = [
+            [1, 0],
+            [2, 0],
+          ];
+        } else {
+          listD0 = [
+            [1, 0],
+            [2, 0],
+            [3, 0],
+          ];
+        }
+        break;
+      case false:
+        if (dBoxes == 3) {
+          listD0 = [
+            [-1, 0],
+            [-2, 0],
+          ];
+        } else {
+          listD0 = [
+            [-1, 0],
+            [-2, 0],
+            [-3, 0],
+          ];
+        }
+        break;
+      default:
+        listD0 = [];
+        break;
+    }
+    bool isRegionClear = !listD0.any((element) => (checkOccupied(mapSelf, [i + element[0], j + element[1]]) || checkOccupied(mapRival, [i + element[0], j + element[1]])));
+    if (isRegionClear) {
+      listFinalSpots.add(listD0.last);
+    }
   }
   return listFinalSpots;
 }

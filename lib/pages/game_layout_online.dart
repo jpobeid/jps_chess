@@ -276,7 +276,7 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
     if (isAbilitySingleUse && !isPieceAbilityActive) {
       //Invalid usable management - Else proceed with ability box delineation
       bool isInvalidUsage = makeInvalidPieceAbilityMessage(
-          context, strPieceName, index, _mapSelf, _listTap);
+          context, _indexPlayerProper, strPieceName, index, _mapSelf, _listTap);
       if (!isInvalidUsage) {
         setState(() {
           _mapPieceAbilityActive = {
@@ -327,7 +327,7 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
         if (_mapPieceAbilityActive.values.first ==
             pieces.mapAbilityName[_strPieceSelected]
                 .indexOf("Stoner's tower")) {
-          int nDuration = 1;
+          int nDuration = 2;
           setState(() {
             //Fix rival piece
             _mapStatusRival = mapStatusTimerAdd(
@@ -347,6 +347,17 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
           setState(() {
             attackIfRivalSpot(listNewTap, false);
             markTracedBoxes(_listTap, listNewTap, true);
+            endTurn();
+          });
+        } else if (_mapPieceAbilityActive.values.first ==
+            pieces.mapAbilityName[_strPieceSelected].indexOf("Stoner's castle")) {
+          setState(() {
+            mapRemoveAdd(_mapSelf, _mapGraveSelf, [true, true], _listTap, 'rook', listNewTap, false);
+            List<int> tupleKing = _mapSelf['king'].first;
+            int intDirectionKingCastle = listNewTap[0] > tupleKing[0] ? 1 : -1;
+            List<int> tupleNewKing = [listNewTap[0] + intDirectionKingCastle, listNewTap[1]];
+            mapRemoveAdd(_mapSelf, _mapGraveSelf, [true, true], tupleKing, 'king', tupleNewKing, false);
+            markTracedBoxes(tupleKing, tupleNewKing, false);
             endTurn();
           });
         }

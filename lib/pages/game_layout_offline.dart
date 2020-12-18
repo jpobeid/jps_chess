@@ -313,7 +313,7 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
     if (isAbilitySingleUse && !isPieceAbilityActive) {
       //Invalid usable management - Else proceed with ability box delineation
       bool isInvalidUsage = makeInvalidPieceAbilityMessage(
-          context, strPieceName, index, _mapSelf, _listTap);
+          context, _indexActivePlayer, strPieceName, index, _mapSelf, _listTap);
       if (!isInvalidUsage) {
         setState(() {
           _mapPieceAbilityActive = {
@@ -384,6 +384,17 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
           setState(() {
             attackIfRivalSpot(listNewTap);
             markTracedBoxes(_listTap, listNewTap, true);
+            endTurn();
+          });
+        } else if (_mapPieceAbilityActive.values.first ==
+            pieces.mapAbilityName[_strPieceSelected].indexOf("Stoner's castle")) {
+          setState(() {
+            mapRemoveAdd(_mapSelf, _mapGraveSelf, [true, true], _listTap, 'rook', listNewTap);
+            List<int> tupleKing = _mapSelf['king'].first;
+            int intDirectionKingCastle = listNewTap[0] > tupleKing[0] ? 1 : -1;
+            List<int> tupleNewKing = [listNewTap[0] + intDirectionKingCastle, listNewTap[1]];
+            mapRemoveAdd(_mapSelf, _mapGraveSelf, [true, true], tupleKing, 'king', tupleNewKing);
+            markTracedBoxes(tupleKing, tupleNewKing, false);
             endTurn();
           });
         }

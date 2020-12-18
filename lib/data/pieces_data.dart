@@ -43,7 +43,7 @@ const Map<String, int> mapPieceRank = {
 const Map<String, List<String>> mapAbilityName = {
   'king': ['Begone bitch', 'Force field', 'I workout'],
   'queen': ['Summon big papi'],
-  'rook': ["Stoner's tower", 'Tower turrets'],
+  'rook': ["Stoner's tower", 'Tower turrets', "Stoner's castle"],
   'bishop': ['Lunar laser-guided ballistic missile'],
   'knight': ['Big-ass-horse', 'Big-ass-L ("Big AL")'],
   'pawn': ['I gotchu homie'],
@@ -52,7 +52,7 @@ const Map<String, List<String>> mapAbilityName = {
 const Map<String, List<bool>> mapAbilitySingleUse = {
   'king': [true, false, false],
   'queen': [true],
-  'rook': [true, true],
+  'rook': [true, true, true],
   'bishop': [true, true],
   'knight': [true, true],
   'pawn': [true],
