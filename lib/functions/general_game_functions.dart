@@ -1,6 +1,14 @@
 import 'package:flutter/foundation.dart' as fnd;
 import 'motion_functions.dart';
 
+const Map<int, String> _mapStatusNumber = {
+  0: 'fixed',
+  1: 'forced',
+  2: 'targeted',
+  3: 'traced',
+  4: 'cannotCheckmate',
+};
+
 void _mapRemoveAdd(
     int nTurn,
     int indexActivePlayer,
@@ -52,11 +60,11 @@ Map<String, List<List<int>>> mapStatusTimerAdd(
   mapStatus.addAll({'timer': listSubTimer});
   return mapStatus;
 }
-
 Map<String, List<List<int>>> mapStatusTimerRemove(
     Map<String, List<List<int>>> mapStatus,
     String strStatus,
     List<List<int>> listListRemove) {
+  int indexStatus = _mapStatusNumber.values.toList().indexOf(strStatus);
   List<List<int>> listSub = mapStatus[strStatus];
   List<List<int>> listSubTimer = mapStatus['timer'];
   listListRemove.forEach((eR) {
@@ -66,7 +74,7 @@ Map<String, List<List<int>>> mapStatusTimerRemove(
           listSub.map((e) => fnd.listEquals(e, eR)).toList().indexOf(true);
       listSub.removeAt(index);
       int indexTimer = listSubTimer
-          .map((e) => fnd.listEquals([e[0], e[1]], eR))
+          .map((e) => fnd.listEquals([e[0], e[1], e[2]], [eR[0], eR[1], indexStatus]))
           .toList()
           .indexOf(true);
       listSubTimer.removeAt(indexTimer);
@@ -85,13 +93,6 @@ Map<String, List<List<int>>> performStatusExpiration(
     Map<String, List<List<int>>> mapRival,
     Map<String, int> mapGraveSelf,
     Map<String, int> mapGraveRival) {
-  Map<int, String> mapStatusNumber = {
-    0: 'fixed',
-    1: 'forced',
-    2: 'targeted',
-    3: 'traced',
-    4: 'cannotCheckmate',
-  };
   List<List<int>> listListSubTimer;
   int i;
   List<int> listI;
@@ -103,17 +104,17 @@ Map<String, List<List<int>>> performStatusExpiration(
     listListSubTimer.forEach((element) {
       if (element.last < nTurn) {
         listI.add(i);
-        List<List<int>> listListSub = mapStatus[mapStatusNumber[element[2]]];
+        List<List<int>> listListSub = mapStatus[_mapStatusNumber[element[2]]];
         int index = listListSub
             .map((e) => fnd.listEquals(e, [element[0], element[1]]))
             .toList()
             .indexOf(true);
         listListSub.removeAt(index);
-        mapStatus.addAll({mapStatusNumber[element[2]]: listListSub});
+        mapStatus.addAll({_mapStatusNumber[element[2]]: listListSub});
         performStatusFunction(
             nTurn,
             indexActivePlayer,
-            mapStatusNumber[element[2]],
+            _mapStatusNumber[element[2]],
             [element[0], element[1]],
             mapSelf,
             mapRival,

@@ -1245,15 +1245,15 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
     if (!isSamePlayer) {
       indexActivePlayer = nTurn % 2;
       performFutureFunction(nTurn, indexActivePlayer);
-      performTurnTranspositionsLocal();
+      performTurnTranspositionsLocal(nTurn, indexActivePlayer);
     }
     uploadGameData(nTurn, indexActivePlayer);
   }
 
-  void performTurnTranspositionsLocal() {
+  void performTurnTranspositionsLocal(int nTurn, int indexActivePlayer) {
     List<Map> listMapTransposed = performTurnTranspositions(
-        _nTurn,
-        _indexActivePlayer,
+        nTurn,
+        indexActivePlayer,
         _mapSelf,
         _mapRival,
         _mapStatusSelf,
@@ -1534,7 +1534,7 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
         1) {
       nTurn = -nPreGameSpecials;
       indexActivePlayer = 1;
-      performTurnTranspositionsLocal();
+      performTurnTranspositionsLocal(nTurn, indexActivePlayer);
     } else {
       nTurn = 0;
       indexActivePlayer = nTurn % 2;

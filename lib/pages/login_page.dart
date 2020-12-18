@@ -267,11 +267,6 @@ class _LoginPageState extends State<LoginPage> {
                                                       [datas.strKey1ActiveUsers]
                                                   .length <
                                               datas.nServerMaxPlayers;
-                                      print(mapServerData[strServerName]
-                                          [datas.strKey1ActiveUsers]);
-                                      print(mapServerData[strServerName]
-                                              [datas.strKey1ActiveUsers]
-                                          .length);
                                       if (isPassCorrect && isServerNotFull) {
                                         //Successful JOIN connection!
                                         ScaffoldMessenger.of(context)
