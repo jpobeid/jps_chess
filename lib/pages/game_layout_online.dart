@@ -10,6 +10,7 @@ import 'package:jps_chess/data/database_data.dart' as datas;
 import 'package:jps_chess/data/pieces_data.dart' as pieces;
 import 'package:jps_chess/data/player_data.dart' as players;
 import 'package:jps_chess/data/special_data.dart' as specials;
+import 'package:jps_chess/functions/draw_functions.dart';
 import 'package:jps_chess/functions/general_game_functions.dart';
 import 'package:jps_chess/functions/motion_functions.dart';
 import 'package:jps_chess/functions/piece_ability_functions.dart';
@@ -121,19 +122,6 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
   List<List<int>> _listTupleAbsSpecialAbility = [];
 
   //region Draw functions
-  Positioned makePiece(double dimBox, String strPieceName, Color colorPiece,
-      List<int> listCoordinate) {
-    return Positioned(
-      left: dimBox * listCoordinate[0],
-      bottom: dimBox * listCoordinate[1],
-      child: Icon(
-        pieces.mapPiece[strPieceName],
-        color: colorPiece,
-        size: dimBox,
-      ),
-    );
-  }
-
   Container makeBoard(double dimBoard, double dimBox,
       Map<String, List<List<int>>> map0, Map<String, List<List<int>>> map1) {
     if (_listBoardColors != null) {

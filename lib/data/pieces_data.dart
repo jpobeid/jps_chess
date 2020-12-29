@@ -13,13 +13,13 @@ const List<String> listPieceName = [
   'pawn',
 ];
 
-const Map<String, IconData> mapPiece = {
-  'king': FlutterIcons.chess_king_mco,
-  'queen': FlutterIcons.chess_queen_mco,
-  'rook': FlutterIcons.chess_rook_mco,
-  'bishop': FlutterIcons.chess_bishop_mco,
-  'knight': FlutterIcons.chess_knight_mco,
-  'pawn': FlutterIcons.chess_pawn_mco,
+const Map<String, double> mapPieceSize = {
+  'king': 1,
+  'queen': 1,
+  'rook': 1,
+  'bishop': 1,
+  'knight': 1,
+  'pawn': 0.9,
 };
 
 const Map<String, String> mapName = {

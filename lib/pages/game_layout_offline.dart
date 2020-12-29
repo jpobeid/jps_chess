@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:jps_chess/functions/draw_functions.dart';
 import 'package:jps_chess/functions/general_game_functions.dart';
 import 'package:jps_chess/widgets/board.dart';
 import 'package:jps_chess/data/player_data.dart' as players;
@@ -165,19 +166,6 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
   List<List<int>> _listTupleAbsSpecialAbility = [];
 
   //region Draw functions
-  Positioned makePiece(double dimBox, String strPieceName, Color colorPiece,
-      List<int> listCoordinate) {
-    return Positioned(
-      left: dimBox * listCoordinate[0],
-      bottom: dimBox * listCoordinate[1],
-      child: Icon(
-        pieces.mapPiece[strPieceName],
-        color: colorPiece,
-        size: dimBox,
-      ),
-    );
-  }
-
   Container makeBoard(double dimBoard, double dimBox,
       Map<String, List<List<int>>> map0, Map<String, List<List<int>>> map1) {
     List<Widget> listStack = [];
@@ -387,13 +375,19 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
             endTurn();
           });
         } else if (_mapPieceAbilityActive.values.first ==
-            pieces.mapAbilityName[_strPieceSelected].indexOf("Stoner's castle")) {
+            pieces.mapAbilityName[_strPieceSelected]
+                .indexOf("Stoner's castle")) {
           setState(() {
-            mapRemoveAdd(_mapSelf, _mapGraveSelf, [true, true], _listTap, 'rook', listNewTap);
+            mapRemoveAdd(_mapSelf, _mapGraveSelf, [true, true], _listTap,
+                'rook', listNewTap);
             List<int> tupleKing = _mapSelf['king'].first;
             int intDirectionKingCastle = listNewTap[0] > tupleKing[0] ? 1 : -1;
-            List<int> tupleNewKing = [listNewTap[0] + intDirectionKingCastle, listNewTap[1]];
-            mapRemoveAdd(_mapSelf, _mapGraveSelf, [true, true], tupleKing, 'king', tupleNewKing);
+            List<int> tupleNewKing = [
+              listNewTap[0] + intDirectionKingCastle,
+              listNewTap[1]
+            ];
+            mapRemoveAdd(_mapSelf, _mapGraveSelf, [true, true], tupleKing,
+                'king', tupleNewKing);
             markTracedBoxes(tupleKing, tupleNewKing, false);
             endTurn();
           });
@@ -529,7 +523,8 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
                       context, ['Confirm use', 'Do not use']);
                 });
             if (indexConfirmation == 0) {
-              _mapStatusSelf = addCannotCheckmateStatus(_nTurn, mapStatusTimerAdd, _mapStatusSelf);
+              _mapStatusSelf = addCannotCheckmateStatus(
+                  _nTurn, mapStatusTimerAdd, _mapStatusSelf);
               _listIsSpecialAbilityActive[_indexActivePlayer] = true;
               primeSpecialAbility(strSpecialAbilityName);
             }
@@ -979,7 +974,8 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
                     [],
                     strPieceName,
                     listNewTap);
-                _mapStatusSelf = addCannotCheckmateStatus(_nTurn, mapStatusTimerAdd, _mapStatusSelf);
+                _mapStatusSelf = addCannotCheckmateStatus(
+                    _nTurn, mapStatusTimerAdd, _mapStatusSelf);
                 markTracedBoxes(listNewTap, listNewTap, true);
                 completeSpecialAbility(true, true, true);
               }
@@ -1244,7 +1240,8 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
                 !toRepeatTurn) {
               completeSpecialAbility(true, true, true);
             } else if (toRepeatTurn) {
-              _mapStatusSelf = addCannotCheckmateStatus(_nTurn, mapStatusTimerAdd, _mapStatusSelf);
+              _mapStatusSelf = addCannotCheckmateStatus(
+                  _nTurn, mapStatusTimerAdd, _mapStatusSelf);
               resetSelection();
               completeSpecialAbility(true, false, true);
             } else {
@@ -1258,10 +1255,25 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
     }
   }
 
-  void markTracedBoxes(List<int> listTap, List<int> listNewTap, bool isOldBoxOnly) {
-    _mapStatusSelf = mapStatusTimerAdd(_nTurn, _mapStatusSelf, 'traced', [[listTap[0], listTap[1]]], players.nDurationTraced);
+  void markTracedBoxes(
+      List<int> listTap, List<int> listNewTap, bool isOldBoxOnly) {
+    _mapStatusSelf = mapStatusTimerAdd(
+        _nTurn,
+        _mapStatusSelf,
+        'traced',
+        [
+          [listTap[0], listTap[1]]
+        ],
+        players.nDurationTraced);
     if (!isOldBoxOnly) {
-      _mapStatusSelf = mapStatusTimerAdd(_nTurn, _mapStatusSelf, 'traced', [[listNewTap[0], listNewTap[1]]], players.nDurationTraced);
+      _mapStatusSelf = mapStatusTimerAdd(
+          _nTurn,
+          _mapStatusSelf,
+          'traced',
+          [
+            [listNewTap[0], listNewTap[1]]
+          ],
+          players.nDurationTraced);
     }
   }
 

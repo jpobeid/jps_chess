@@ -30,4 +30,4 @@ const List<int> listAlpha = [
 ];
 
 const String strRulesUrl =
-    "https://firebasestorage.googleapis.com/v0/b/jp-s-chess.appspot.com/o/JP's%20Chess%20Rules.pdf?alt=media&token=6c2197ea-7e22-436b-9981-f29a1eba3a31";
+    "https://firebasestorage.googleapis.com/v0/b/jp-s-chess.appspot.com/o/JP's%20Chess%20Rules.pdf?alt=media&token=49fa490e-a5bb-49e7-a9ee-eec7e03972be";

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class AboutPage extends StatelessWidget {
   static const routeName = '/about-page';
 
-  final strVersion = 'Beta';
+  final strVersion = '1.2';
   final TextStyle styleAboutHead =
       TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold);
   final TextStyle styleAboutSub = TextStyle(
