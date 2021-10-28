@@ -338,13 +338,19 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
             endTurn();
           });
         } else if (_mapPieceAbilityActive.values.first ==
-            pieces.mapAbilityName[_strPieceSelected].indexOf("Stoner's castle")) {
+            pieces.mapAbilityName[_strPieceSelected]
+                .indexOf("Stoner's castle")) {
           setState(() {
-            mapRemoveAdd(_mapSelf, _mapGraveSelf, [true, true], _listTap, 'rook', listNewTap, false);
+            mapRemoveAdd(_mapSelf, _mapGraveSelf, [true, true], _listTap,
+                'rook', listNewTap, false);
             List<int> tupleKing = _mapSelf['king'].first;
             int intDirectionKingCastle = listNewTap[0] > tupleKing[0] ? 1 : -1;
-            List<int> tupleNewKing = [listNewTap[0] + intDirectionKingCastle, listNewTap[1]];
-            mapRemoveAdd(_mapSelf, _mapGraveSelf, [true, true], tupleKing, 'king', tupleNewKing, false);
+            List<int> tupleNewKing = [
+              listNewTap[0] + intDirectionKingCastle,
+              listNewTap[1]
+            ];
+            mapRemoveAdd(_mapSelf, _mapGraveSelf, [true, true], tupleKing,
+                'king', tupleNewKing, false);
             markTracedBoxes(tupleKing, tupleNewKing, false);
             endTurn();
           });
@@ -482,7 +488,8 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
                       context, ['Confirm use', 'Do not use']);
                 });
             if (indexConfirmation == 0) {
-              _mapStatusSelf = addCannotCheckmateStatus(_nTurn, mapStatusTimerAdd, _mapStatusSelf);
+              _mapStatusSelf = addCannotCheckmateStatus(
+                  _nTurn, mapStatusTimerAdd, _mapStatusSelf);
               _isSpecialAbilityActiveProper = true;
               primeSpecialAbility(strSpecialAbilityName);
             }
@@ -729,7 +736,7 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
                   border:
                       Border.all(color: Colors.black, width: sizeBorderWidth),
                 ),
-                child: FlatButton(
+                child: TextButton(
                   child: Text(
                     e,
                     style: styleSub,
@@ -939,7 +946,8 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
                   listNewTap,
                   false,
                 );
-                _mapStatusSelf = addCannotCheckmateStatus(_nTurn, mapStatusTimerAdd, _mapStatusSelf);
+                _mapStatusSelf = addCannotCheckmateStatus(
+                    _nTurn, mapStatusTimerAdd, _mapStatusSelf);
                 uploadDeclaration((1 - _indexPlayerProper),
                     'Opponent performed a Necromancer revival of ${strPlayer == 'My' ? 'their' : 'your'} $strPieceName');
                 markTracedBoxes(listNewTap, listNewTap, true);
@@ -1210,7 +1218,8 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
                 !toRepeatTurn) {
               completeSpecialAbility(true, true, true);
             } else if (toRepeatTurn) {
-              _mapStatusSelf = addCannotCheckmateStatus(_nTurn, mapStatusTimerAdd, _mapStatusSelf);
+              _mapStatusSelf = addCannotCheckmateStatus(
+                  _nTurn, mapStatusTimerAdd, _mapStatusSelf);
               uploadGameData(_nTurn, _indexActivePlayer);
               resetSelection();
               completeSpecialAbility(true, false, true);
@@ -1225,10 +1234,25 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
     }
   }
 
-  void markTracedBoxes(List<int> listTap, List<int> listNewTap, bool isOldBoxOnly) {
-    _mapStatusSelf = mapStatusTimerAdd(_nTurn, _mapStatusSelf, 'traced', [[listTap[0], listTap[1]]], players.nDurationTraced);
+  void markTracedBoxes(
+      List<int> listTap, List<int> listNewTap, bool isOldBoxOnly) {
+    _mapStatusSelf = mapStatusTimerAdd(
+        _nTurn,
+        _mapStatusSelf,
+        'traced',
+        [
+          [listTap[0], listTap[1]]
+        ],
+        players.nDurationTraced);
     if (!isOldBoxOnly) {
-      _mapStatusSelf = mapStatusTimerAdd(_nTurn, _mapStatusSelf, 'traced', [[listNewTap[0], listNewTap[1]]], players.nDurationTraced);
+      _mapStatusSelf = mapStatusTimerAdd(
+          _nTurn,
+          _mapStatusSelf,
+          'traced',
+          [
+            [listNewTap[0], listNewTap[1]]
+          ],
+          players.nDurationTraced);
     }
   }
 
@@ -1689,7 +1713,7 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
         appBar: AppBar(
           automaticallyImplyLeading: false,
           actions: [
-            FlatButton.icon(
+            TextButton.icon(
               icon: Icon(Icons.arrow_forward_ios),
               label: Text(
                 'Pass',
@@ -1896,44 +1920,48 @@ class _GameLayoutOnlineState extends State<GameLayoutOnline> {
               barrierDismissible: true,
               context: context,
               // ignore: deprecated_member_use
-              child: AlertDialog(
-                title: Text(
-                  strMessage,
-                  textAlign: TextAlign.center,
-                ),
-              ));
+              builder: (context) {
+                return AlertDialog(
+                  title: Text(
+                    strMessage,
+                    textAlign: TextAlign.center,
+                  ),
+                );
+              });
         });
-      }
-      if (_indexPlayerProper == _indexActivePlayer) {
-        return Stack(
-          children: [
-            makeMainScaffold(isPreGame, dimBoard, dimBox, strAppBarText),
-            DisconnectionOverlay(
-              nPlayers: _nPlayers,
-            ),
-            _listGameOverByKing.first != 0
-                ? makeGameOverOverlay()
-                : Container(),
-          ],
-        );
+        if (_indexPlayerProper == _indexActivePlayer) {
+          return Stack(
+            children: [
+              makeMainScaffold(isPreGame, dimBoard, dimBox, strAppBarText),
+              DisconnectionOverlay(
+                nPlayers: _nPlayers,
+              ),
+              _listGameOverByKing.first != 0
+                  ? makeGameOverOverlay()
+                  : Container(),
+            ],
+          );
+        } else {
+          return Stack(
+            children: [
+              IgnorePointer(
+                child: makeMainScaffold(
+                    isPreGame, dimBoard, dimBox, strAppBarText),
+              ),
+              DisconnectionOverlay(
+                nPlayers: _nPlayers,
+              ),
+              _listGameOverByKing.first != 0
+                  ? makeGameOverOverlay()
+                  : Container(),
+            ],
+          );
+        }
       } else {
-        return Stack(
-          children: [
-            IgnorePointer(
-              child:
-                  makeMainScaffold(isPreGame, dimBoard, dimBox, strAppBarText),
-            ),
-            DisconnectionOverlay(
-              nPlayers: _nPlayers,
-            ),
-            _listGameOverByKing.first != 0
-                ? makeGameOverOverlay()
-                : Container(),
-          ],
-        );
+        return Container();
       }
     } else {
-      return Scaffold();
+      return Container();
     }
   }
 }

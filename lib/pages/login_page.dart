@@ -84,7 +84,7 @@ class _LoginPageState extends State<LoginPage> {
           appBar: AppBar(
             title: Text('Multiple devices'),
             actions: [
-              FlatButton.icon(
+              TextButton.icon(
                 onPressed: () async {
                   _authService.signOut();
                   Navigator.pushReplacementNamed(context, '/title-page');
@@ -195,7 +195,7 @@ class _LoginPageState extends State<LoginPage> {
                               borderRadius: BorderRadius.circular(
                                   LoginPage.sizeBorderRadius),
                             ),
-                            child: FlatButton(
+                            child: TextButton(
                               child: Text(
                                 _listToggleSelected[0] ? 'Create' : 'Join',
                                 style: LoginPage.styleHead,

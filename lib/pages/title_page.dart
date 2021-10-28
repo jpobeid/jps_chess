@@ -55,7 +55,7 @@ class _TitlePageState extends State<TitlePage> {
           appBar: AppBar(
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             actions: [
-              FlatButton.icon(
+              TextButton.icon(
                 icon: TitlePage.iconSettings,
                 label: Text(''),
                 onPressed: () {
@@ -131,7 +131,7 @@ Container _makeModeButton(BuildContext context, double fractionHeightMode,
       border: Border.all(color: Colors.white, width: 2),
       borderRadius: BorderRadius.circular(10),
     ),
-    child: FlatButton(
+    child: TextButton(
       child: Text(
         listModeName[index],
         style: styleMode,

@@ -767,7 +767,7 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
                   border:
                       Border.all(color: Colors.black, width: sizeBorderWidth),
                 ),
-                child: FlatButton(
+                child: TextButton(
                   child: Text(
                     e,
                     style: styleSub,
@@ -1445,7 +1445,7 @@ class _GameLayoutOfflineState extends State<GameLayoutOffline> {
       appBar: AppBar(
         automaticallyImplyLeading: false,
         actions: [
-          FlatButton.icon(
+          TextButton.icon(
             icon: Icon(Icons.arrow_forward_ios),
             label: Text(
               'Pass',

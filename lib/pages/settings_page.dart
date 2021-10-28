@@ -103,7 +103,7 @@ class _SettingsPageState extends State<SettingsPage> {
           appBar: AppBar(
             title: Text('Settings / Info'),
             actions: [
-              FlatButton(
+              TextButton(
                 child: Text('Reset'),
                 onPressed: () async {
                   setMapDefaults();
@@ -211,7 +211,7 @@ Row _makeModeButton(BuildContext context, double fractionHeightMode,
           border: Border.all(color: Colors.white, width: 2),
           borderRadius: BorderRadius.circular(10),
         ),
-        child: FlatButton(
+        child: TextButton(
           child: Text(
             listModeName[index],
             style: styleMode,

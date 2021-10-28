@@ -122,13 +122,14 @@ class _SpecialSelectState extends State<SpecialSelectOffline> {
                 ),
                 onTap: () async {
                   bool result = await showDialog(
-                    context: context,
-                    child: ConfirmDialog(
-                      strSpecialName: strSpecialName,
-                      iconSpecial: listSpecialIcon[indexReference],
-                      isExtra: listIsExtra[indexReference] == 1,
-                    ),
-                  );
+                      context: context,
+                      builder: (_) {
+                        return ConfirmDialog(
+                          strSpecialName: strSpecialName,
+                          iconSpecial: listSpecialIcon[indexReference],
+                          isExtra: listIsExtra[indexReference] == 1,
+                        );
+                      });
                   onConfirmDialogResult(strSpecialName, result, indexReference);
                 },
               ),
@@ -225,13 +226,13 @@ class _ConfirmDialogState extends State<ConfirmDialog> {
           ),
         ),
         actions: [
-          FlatButton(
+          TextButton(
             onPressed: () {
               Navigator.pop(context, true);
             },
             child: Text('Yes'),
           ),
-          FlatButton(
+          TextButton(
             onPressed: () {
               Navigator.pop(context, false);
             },
@@ -296,13 +297,13 @@ class _ConfirmDialogState extends State<ConfirmDialog> {
           ),
         ),
         actions: [
-          FlatButton(
+          TextButton(
             onPressed: () {
               Navigator.pop(context, true);
             },
             child: Text('Yes'),
           ),
-          FlatButton(
+          TextButton(
             onPressed: () {
               Navigator.pop(context, false);
             },
